@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration Persistence Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        .results { margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Configuration Persistence Test</h1>
+    
+    <div class="test-section">
+        <h3>Test 1: Save Configuration</h3>
+        <button onclick="testSaveConfig()">Save Test Room</button>
+        <div id="saveResults" class="results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 2: Load Configuration</h3>
+        <button onclick="testLoadConfig()">Load Configuration</button>
+        <div id="loadResults" class="results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 3: ConfigManager Integration</h3>
+        <button onclick="testConfigManager()">Test ConfigManager</button>
+        <div id="configManagerResults" class="results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 4: Full Flow Simulation</h3>
+        <button onclick="testFullFlow()">Simulate Add Room + Reload</button>
+        <div id="fullFlowResults" class="results"></div>
+    </div>
+
+    <script src="config-manager.js"></script>
+    <script>
+        async function testSaveConfig() {
+            const resultsDiv = document.getElementById('saveResults');
+            try {
+                const testConfig = {
+                    rooms: [
+                        {
+                            id: 'test_room_' + Date.now(),
+                            name: 'Test Room',
+                            createdAt: new Date().toISOString()
+                        }
+                    ],
+                    devices: [],
+                    deviceTypes: ['computer', 'split', 'lampada da tavolo']
+                };
+                
+                const response = await fetch('/api/save-config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filename: 'shelly-environment-config.json',
+                        data: testConfig
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    resultsDiv.innerHTML = `<div class="success">✅ ${result.message}</div>`;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function testLoadConfig() {
+            const resultsDiv = document.getElementById('loadResults');
+            try {
+                const response = await fetch('/api/load-config');
+                
+                if (response.ok) {
+                    const config = await response.json();
+                    resultsDiv.innerHTML = `
+                        <div class="success">✅ Configuration loaded successfully</div>
+                        <pre>${JSON.stringify(config, null, 2)}</pre>
+                    `;
+                } else if (response.status === 404) {
+                    resultsDiv.innerHTML = `<div class="error">⚠️ Configuration file not found</div>`;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function testConfigManager() {
+            const resultsDiv = document.getElementById('configManagerResults');
+            try {
+                const configManager = new ConfigManager();
+                await configManager.initialize();
+                
+                const config = configManager.getConfig();
+                resultsDiv.innerHTML = `
+                    <div class="success">✅ ConfigManager initialized successfully</div>
+                    <p><strong>Rooms:</strong> ${config.rooms.length}</p>
+                    <p><strong>Devices:</strong> ${config.devices.length}</p>
+                    <p><strong>Device Types:</strong> ${config.deviceTypes.length}</p>
+                    <pre>${JSON.stringify(config, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function testFullFlow() {
+            const resultsDiv = document.getElementById('fullFlowResults');
+            try {
+                resultsDiv.innerHTML = '<p>🔄 Testing full flow...</p>';
+                
+                // Step 1: Initialize ConfigManager
+                const configManager = new ConfigManager();
+                await configManager.initialize();
+                
+                // Step 2: Add a room (simulate user action)
+                const config = configManager.getConfig();
+                const newRoom = {
+                    id: 'full_test_' + Date.now(),
+                    name: 'Full Test Room',
+                    createdAt: new Date().toISOString()
+                };
+                config.rooms.push(newRoom);
+                
+                // Step 3: Save configuration
+                await configManager.updateConfig(config);
+                
+                // Step 4: Create a new ConfigManager instance (simulate page reload)
+                const configManager2 = new ConfigManager();
+                await configManager2.initialize();
+                
+                // Step 5: Check if the room persisted
+                const loadedConfig = configManager2.getConfig();
+                const foundRoom = loadedConfig.rooms.find(r => r.id === newRoom.id);
+                
+                if (foundRoom) {
+                    resultsDiv.innerHTML = `
+                        <div class="success">✅ Full flow test passed!</div>
+                        <p>Room "${foundRoom.name}" persisted correctly across "reload"</p>
+                        <p><strong>Total rooms:</strong> ${loadedConfig.rooms.length}</p>
+                        <pre>${JSON.stringify(loadedConfig, null, 2)}</pre>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">❌ Room did not persist across reload</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html> 

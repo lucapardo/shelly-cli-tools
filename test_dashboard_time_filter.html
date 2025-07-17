@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Time Filter Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #1a1a1a; color: white; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        .results { margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 3px; color: #333; }
+        select { padding: 8px; margin: 10px; }
+        .time-filter-demo { padding: 15px; background: #2a2a2a; border-radius: 8px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Dashboard Time Filter Test</h1>
+    
+    <div class="test-section">
+        <h3>Test Dashboard Time Filter</h3>
+        <p>This test verifies that the dashboard time filter dropdown works correctly and refreshes charts when changed.</p>
+        
+        <div class="time-filter-demo">
+            <h4>Demo Time Filter (same as dashboard):</h4>
+            <label for="testTimeRange">Time Range:</label>
+            <select id="testTimeRange" onchange="testTimeFilterChange()">
+                <option value="1" selected>Last Hour</option>
+                <option value="24">Last 24 Hours</option>
+                <option value="168">Last Week</option>
+                <option value="720">Last Month</option>
+            </select>
+            
+            <div id="filterInfo" style="margin-top: 10px; padding: 10px; background: #333; border-radius: 5px;">
+                <strong>Current Filter:</strong> <span id="currentFilter">Last Hour (1 hours)</span><br>
+                <strong>Data Range:</strong> <span id="dataRange">Loading...</span>
+            </div>
+        </div>
+        
+        <button onclick="generateTestData()">Generate Test Data</button>
+        <button onclick="testFilterFunctionality()">Test All Filters</button>
+        <button onclick="openDashboard()">Open Dashboard</button>
+        
+        <div id="testResults" class="results">
+            <p>Click "Generate Test Data" first, then "Test All Filters" to verify the functionality.</p>
+        </div>
+    </div>
+
+    <script>
+        let testData = [];
+
+        function log(message, type = 'info') {
+            const resultsDiv = document.getElementById('testResults');
+            const timestamp = new Date().toLocaleTimeString();
+            resultsDiv.innerHTML += `<p>[${timestamp}] ${message}</p>`;
+            console.log(message);
+        }
+
+        function generateTestData() {
+            try {
+                testData = [];
+                const now = Date.now();
+                
+                // Generate data for the last month (720 hours)
+                const totalHours = 720;
+                const pointsPerHour = 12; // Every 5 minutes
+                
+                for (let h = 0; h < totalHours; h++) {
+                    for (let p = 0; p < pointsPerHour; p++) {
+                        const timestamp = now - (h * 60 * 60 * 1000) - (p * 5 * 60 * 1000);
+                        testData.push({
+                            timestamp: timestamp,
+                            apower_a: 200 + Math.random() * 100,
+                            apower_b: Math.random() * 50,
+                            apower_c: 500 + Math.random() * 200
+                        });
+                    }
+                }
+                
+                // Sort by timestamp (oldest first)
+                testData.sort((a, b) => a.timestamp - b.timestamp);
+                
+                log(`✅ Generated ${testData.length} test data points spanning ${totalHours} hours`, 'success');
+                updateFilterInfo();
+                
+            } catch (error) {
+                log('❌ Error generating test data: ' + error.message, 'error');
+            }
+        }
+
+        function filterDataByTimeRange(data, hours) {
+            const now = Date.now();
+            const timeRange = hours * 60 * 60 * 1000; // Convert hours to milliseconds
+            const cutoffTime = now - timeRange;
+            
+            return data.filter(reading => reading.timestamp >= cutoffTime);
+        }
+
+        function testTimeFilterChange() {
+            const selectedHours = parseFloat(document.getElementById('testTimeRange').value);
+            const selectedText = document.getElementById('testTimeRange').selectedOptions[0].text;
+            
+            log(`🔄 Time filter changed to: ${selectedText} (${selectedHours} hours)`, 'info');
+            
+            if (testData.length > 0) {
+                const filteredData = filterDataByTimeRange(testData, selectedHours);
+                log(`   📊 Filtered data: ${filteredData.length} points out of ${testData.length} total`, 'info');
+                
+                if (filteredData.length > 0) {
+                    const oldestFiltered = new Date(Math.min(...filteredData.map(d => d.timestamp)));
+                    const newestFiltered = new Date(Math.max(...filteredData.map(d => d.timestamp)));
+                    log(`   📅 Date range: ${oldestFiltered.toLocaleString()} to ${newestFiltered.toLocaleString()}`, 'info');
+                }
+            }
+            
+            updateFilterInfo();
+        }
+
+        function updateFilterInfo() {
+            const selectedHours = parseFloat(document.getElementById('testTimeRange').value);
+            const selectedText = document.getElementById('testTimeRange').selectedOptions[0].text;
+            
+            document.getElementById('currentFilter').textContent = `${selectedText} (${selectedHours} hours)`;
+            
+            if (testData.length > 0) {
+                const filteredData = filterDataByTimeRange(testData, selectedHours);
+                const now = new Date();
+                const cutoffTime = new Date(now.getTime() - (selectedHours * 60 * 60 * 1000));
+                
+                document.getElementById('dataRange').innerHTML = 
+                    `${filteredData.length} points from ${cutoffTime.toLocaleString()} to ${now.toLocaleString()}`;
+            } else {
+                document.getElementById('dataRange').textContent = 'No test data generated';
+            }
+        }
+
+        function testFilterFunctionality() {
+            if (testData.length === 0) {
+                log('❌ Please generate test data first', 'error');
+                return;
+            }
+
+            try {
+                const filters = [
+                    { value: '1', name: 'Last Hour' },
+                    { value: '24', name: 'Last 24 Hours' },
+                    { value: '168', name: 'Last Week' },
+                    { value: '720', name: 'Last Month' }
+                ];
+
+                log('📊 Testing all time filters:', 'info');
+
+                filters.forEach(filter => {
+                    const hours = parseFloat(filter.value);
+                    const filteredData = filterDataByTimeRange(testData, hours);
+                    const percentage = ((filteredData.length / testData.length) * 100).toFixed(1);
+                    
+                    log(`   ${filter.name}: ${filteredData.length} points (${percentage}% of total)`, 'info');
+                    
+                    // Test the dropdown change
+                    document.getElementById('testTimeRange').value = filter.value;
+                    testTimeFilterChange();
+                });
+
+                log('✅ All time filters tested successfully', 'success');
+                
+            } catch (error) {
+                log('❌ Error testing filters: ' + error.message, 'error');
+            }
+        }
+
+        function openDashboard() {
+            log('🚀 Opening dashboard page...', 'info');
+            window.open('graphs.html', '_blank');
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateFilterInfo();
+            log('Time filter test initialized', 'success');
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Integration Test - Shelly 3EM</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        .btn:hover {
+            background: #5a6fd8;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+        
+        .log-success {
+            color: #28a745;
+        }
+        
+        .log-error {
+            color: #dc3545;
+        }
+        
+        .log-info {
+            color: #17a2b8;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .suggestion-highlight {
+            background-color: #e8f5e8;
+            border: 2px solid #28a745;
+        }
+        
+        .device-types-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .device-type-card {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .appliances-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .appliance-card {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .appliance-name {
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .appliance-consumption {
+            color: #667eea;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 CSV Integration Test</h1>
+    <p>Test dell'integrazione dei file CSV per tipi di dispositivo e consumi</p>
+
+    <!-- Test Device Types Loading -->
+    <div class="container">
+        <h2>📋 Test Caricamento Tipi di Dispositivo</h2>
+        <button class="btn" onclick="testLoadDeviceTypes()">Carica Tipi di Dispositivo da CSV</button>
+        <button class="btn btn-secondary" onclick="clearDeviceTypesLog()">Pulisci Log</button>
+        
+        <div id="deviceTypesResult" class="device-types-grid"></div>
+        <div id="deviceTypesLog" class="log"></div>
+    </div>
+
+    <!-- Test Appliances Loading -->
+    <div class="container">
+        <h2>📊 Test Caricamento Dati Elettrodomestici</h2>
+        <button class="btn" onclick="testLoadAppliances()">Carica Dati Elettrodomestici da CSV</button>
+        <button class="btn btn-secondary" onclick="clearAppliancesLog()">Pulisci Log</button>
+        
+        <div id="appliancesResult" class="appliances-grid"></div>
+        <div id="appliancesLog" class="log"></div>
+    </div>
+
+    <!-- Test Consumption Suggestions -->
+    <div class="container">
+        <h2>💡 Test Suggerimenti Consumo</h2>
+        <div class="form-group">
+            <label for="deviceTypeSelect">Seleziona Tipo di Dispositivo:</label>
+            <select id="deviceTypeSelect" onchange="testConsumptionSuggestion()">
+                <option value="">-- Seleziona un tipo --</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="peakPowerTest">Consumo Massimo Suggerito (W):</label>
+            <input type="number" id="peakPowerTest" readonly>
+        </div>
+        
+        <div class="form-group">
+            <label for="averagePowerTest">Consumo Medio Suggerito (W):</label>
+            <input type="number" id="averagePowerTest" readonly>
+        </div>
+        
+        <div id="suggestionLog" class="log"></div>
+    </div>
+
+    <!-- Test ConfigManager Integration -->
+    <div class="container">
+        <h2>⚙️ Test Integrazione ConfigManager</h2>
+        <button class="btn" onclick="testConfigManagerIntegration()">Test ConfigManager con CSV</button>
+        <button class="btn btn-secondary" onclick="clearConfigLog()">Pulisci Log</button>
+        
+        <div id="configLog" class="log"></div>
+    </div>
+
+    <script src="config-manager.js"></script>
+    <script>
+        let configManager = null;
+        let deviceTypes = [];
+        let appliances = {};
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async function() {
+            log('configLog', '🚀 Inizializzazione test CSV integration...', 'info');
+            
+            try {
+                configManager = new ConfigManager();
+                await configManager.initialize();
+                log('configLog', '✅ ConfigManager inizializzato', 'success');
+            } catch (error) {
+                log('configLog', `❌ Errore inizializzazione ConfigManager: ${error.message}`, 'error');
+            }
+        });
+
+        // Logging function
+        function log(containerId, message, type = 'info') {
+            const logContainer = document.getElementById(containerId);
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        // Clear log functions
+        function clearDeviceTypesLog() {
+            document.getElementById('deviceTypesLog').innerHTML = '';
+            document.getElementById('deviceTypesResult').innerHTML = '';
+        }
+
+        function clearAppliancesLog() {
+            document.getElementById('appliancesLog').innerHTML = '';
+            document.getElementById('appliancesResult').innerHTML = '';
+        }
+
+        function clearConfigLog() {
+            document.getElementById('configLog').innerHTML = '';
+        }
+
+        // Test device types loading
+        async function testLoadDeviceTypes() {
+            log('deviceTypesLog', '📋 Caricamento tipi di dispositivo da CSV...', 'info');
+            
+            try {
+                const response = await fetch('/api/get-device-types');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                deviceTypes = data.deviceTypes;
+                
+                log('deviceTypesLog', `✅ Caricati ${deviceTypes.length} tipi di dispositivo`, 'success');
+                
+                // Display device types
+                const resultContainer = document.getElementById('deviceTypesResult');
+                resultContainer.innerHTML = deviceTypes.map(type => `
+                    <div class="device-type-card">
+                        <strong>${type}</strong>
+                    </div>
+                `).join('');
+                
+                // Update select dropdown
+                const select = document.getElementById('deviceTypeSelect');
+                select.innerHTML = '<option value="">-- Seleziona un tipo --</option>' +
+                    deviceTypes.map(type => `<option value="${type}">${type}</option>`).join('');
+                
+                log('deviceTypesLog', '📋 Tipi di dispositivo visualizzati', 'info');
+                
+            } catch (error) {
+                log('deviceTypesLog', `❌ Errore caricamento tipi: ${error.message}`, 'error');
+            }
+        }
+
+        // Test appliances loading
+        async function testLoadAppliances() {
+            log('appliancesLog', '📊 Caricamento dati elettrodomestici da CSV...', 'info');
+            
+            try {
+                const response = await fetch('/api/get-appliances');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                appliances = data.appliances;
+                
+                const applianceCount = Object.keys(appliances).length;
+                log('appliancesLog', `✅ Caricati ${applianceCount} elettrodomestici`, 'success');
+                
+                // Display appliances
+                const resultContainer = document.getElementById('appliancesResult');
+                resultContainer.innerHTML = Object.entries(appliances).map(([name, consumption]) => `
+                    <div class="appliance-card">
+                        <div class="appliance-name">${name}</div>
+                        <div class="appliance-consumption">${consumption}W</div>
+                    </div>
+                `).join('');
+                
+                log('appliancesLog', '📊 Elettrodomestici visualizzati', 'info');
+                
+            } catch (error) {
+                log('appliancesLog', `❌ Errore caricamento elettrodomestici: ${error.message}`, 'error');
+            }
+        }
+
+        // Test consumption suggestion
+        async function testConsumptionSuggestion() {
+            const selectedType = document.getElementById('deviceTypeSelect').value;
+            
+            if (!selectedType) {
+                document.getElementById('peakPowerTest').value = '';
+                document.getElementById('averagePowerTest').value = '';
+                return;
+            }
+            
+            log('suggestionLog', `💡 Test suggerimento per: ${selectedType}`, 'info');
+            
+            try {
+                if (!configManager) {
+                    throw new Error('ConfigManager non inizializzato');
+                }
+                
+                const suggestion = await configManager.getSuggestedConsumption(selectedType);
+                
+                if (suggestion.available) {
+                    const peakField = document.getElementById('peakPowerTest');
+                    const avgField = document.getElementById('averagePowerTest');
+                    
+                    peakField.value = suggestion.suggestedConsumption;
+                    avgField.value = Math.round(suggestion.suggestedConsumption * 0.8);
+                    
+                    peakField.className = 'suggestion-highlight';
+                    avgField.className = 'suggestion-highlight';
+                    
+                    const matchText = suggestion.matchType === 'exact' ? 'corrispondenza esatta' : 'dispositivo simile';
+                    log('suggestionLog', `✅ Suggerimento trovato (${matchText}): ${suggestion.suggestedConsumption}W`, 'success');
+                    
+                    // Clear highlighting after 3 seconds
+                    setTimeout(() => {
+                        peakField.className = '';
+                        avgField.className = '';
+                    }, 3000);
+                    
+                } else {
+                    document.getElementById('peakPowerTest').value = '';
+                    document.getElementById('averagePowerTest').value = '';
+                    log('suggestionLog', `⚠️ Nessun suggerimento disponibile per: ${selectedType}`, 'error');
+                }
+                
+            } catch (error) {
+                log('suggestionLog', `❌ Errore suggerimento: ${error.message}`, 'error');
+            }
+        }
+
+        // Test ConfigManager integration
+        async function testConfigManagerIntegration() {
+            log('configLog', '⚙️ Test integrazione ConfigManager con CSV...', 'info');
+            
+            try {
+                if (!configManager) {
+                    throw new Error('ConfigManager non inizializzato');
+                }
+                
+                // Test loading device types from CSV
+                log('configLog', '📋 Test caricamento tipi dispositivo...', 'info');
+                const deviceTypesLoaded = await configManager.loadDeviceTypesFromCSV();
+                
+                if (deviceTypesLoaded) {
+                    const config = configManager.getConfig();
+                    log('configLog', `✅ Tipi dispositivo caricati: ${config.deviceTypes.length} elementi`, 'success');
+                    
+                    // Show first few device types
+                    const firstFew = config.deviceTypes.slice(0, 5).join(', ');
+                    log('configLog', `📋 Primi tipi: ${firstFew}...`, 'info');
+                } else {
+                    log('configLog', '⚠️ Fallback ai tipi predefiniti', 'error');
+                }
+                
+                // Test appliances data
+                log('configLog', '📊 Test caricamento dati elettrodomestici...', 'info');
+                const appliancesData = await configManager.getAppliancesData();
+                const applianceCount = Object.keys(appliancesData).length;
+                
+                if (applianceCount > 0) {
+                    log('configLog', `✅ Dati elettrodomestici caricati: ${applianceCount} elementi`, 'success');
+                    
+                    // Test a few suggestions
+                    const testTypes = ['Computer - desktop PC', 'Microwave oven', 'Television, LCD'];
+                    
+                    for (const testType of testTypes) {
+                        if (appliancesData[testType]) {
+                            log('configLog', `💡 ${testType}: ${appliancesData[testType]}W`, 'info');
+                        }
+                    }
+                } else {
+                    log('configLog', '❌ Nessun dato elettrodomestico caricato', 'error');
+                }
+                
+                log('configLog', '✅ Test integrazione completato', 'success');
+                
+            } catch (error) {
+                log('configLog', `❌ Errore test integrazione: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html> 

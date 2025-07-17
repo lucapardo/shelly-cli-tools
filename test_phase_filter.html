@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase Filter Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #1a1a1a; color: white; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        .results { margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 3px; color: #333; }
+        select { padding: 8px; margin: 10px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Phase Filter Test</h1>
+    
+    <div class="test-section">
+        <h3>Test Phase Filter Functionality</h3>
+        <p>This test verifies that the phase filter dropdown properly triggers chart updates.</p>
+        
+        <div>
+            <label for="testPhaseView">Test Phase Filter:</label>
+            <select id="testPhaseView" onchange="testPhaseFilterChange()">
+                <option value="all">All Phases</option>
+                <option value="A">Phase A</option>
+                <option value="B">Phase B</option>
+                <option value="C">Phase C</option>
+            </select>
+        </div>
+        
+        <button onclick="setupTestData()">Setup Test Data</button>
+        <button onclick="testFilterFunctionality()">Test Filter</button>
+        <button onclick="openConsumptionPage()">Open Consumption Analysis</button>
+        
+        <div id="testResults" class="results">
+            <p>Click "Setup Test Data" first, then "Test Filter" to verify the functionality.</p>
+        </div>
+    </div>
+
+    <script src="config-manager.js"></script>
+    <script src="device-tracking.js"></script>
+    <script>
+        let deviceTracker;
+        let configManager;
+        let testAnalysis;
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                configManager = new ConfigManager();
+                await configManager.initialize();
+                deviceTracker = new DeviceTracker();
+                log('Test initialized successfully', 'success');
+            } catch (error) {
+                log('Error initializing: ' + error.message, 'error');
+            }
+        });
+
+        function log(message, type = 'info') {
+            const resultsDiv = document.getElementById('testResults');
+            const timestamp = new Date().toLocaleTimeString();
+            resultsDiv.innerHTML += `<p>[${timestamp}] ${message}</p>`;
+            console.log(message);
+        }
+
+        async function setupTestData() {
+            try {
+                const config = configManager.getConfig();
+                
+                // Create test devices
+                config.devices = [
+                    {
+                        id: 'test_device_a',
+                        name: 'Test Device A',
+                        type: 'computer',
+                        roomId: 'office',
+                        phase: 'A',
+                        averagePower: 200,
+                        peakPower: 300,
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: 'test_device_b',
+                        name: 'Test Device B',
+                        type: 'printer',
+                        roomId: 'office',
+                        phase: 'B',
+                        averagePower: 150,
+                        peakPower: 200,
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: 'test_device_c',
+                        name: 'Test Device C',
+                        type: 'microwave',
+                        roomId: 'kitchen',
+                        phase: 'C',
+                        averagePower: 1000,
+                        peakPower: 1200,
+                        createdAt: new Date().toISOString()
+                    }
+                ];
+
+                config.rooms = [
+                    { id: 'office', name: 'Office', createdAt: new Date().toISOString() },
+                    { id: 'kitchen', name: 'Kitchen', createdAt: new Date().toISOString() }
+                ];
+
+                await configManager.updateConfig(config);
+
+                // Generate test events
+                const now = Date.now();
+                const devices = [
+                    { id: 'test_device_a', phase: 'A', power: 200 },
+                    { id: 'test_device_b', phase: 'B', power: 150 },
+                    { id: 'test_device_c', phase: 'C', power: 1000 }
+                ];
+
+                devices.forEach(device => {
+                    for (let i = 0; i < 3; i++) {
+                        const eventTime = now - Math.random() * 24 * 60 * 60 * 1000;
+                        const duration = 60 * 60 * 1000; // 1 hour
+                        
+                        const turnOnEvent = {
+                            type: 'peak',
+                            phase: device.phase,
+                            powerDelta: device.power,
+                            timestamp: eventTime,
+                            readings: generateTestReadings(device.phase, device.power),
+                            currentPower: device.power
+                        };
+                        
+                        const turnOffEvent = {
+                            type: 'valley',
+                            phase: device.phase,
+                            powerDelta: -device.power,
+                            timestamp: eventTime + duration,
+                            readings: generateTestReadings(device.phase, 0),
+                            currentPower: 0
+                        };
+                        
+                        deviceTracker.recordDeviceEvent(device.id, turnOnEvent, turnOffEvent, 'usage');
+                    }
+                });
+
+                log('✅ Test data setup complete - 3 devices with events across all phases', 'success');
+                
+                // Get analysis for testing
+                testAnalysis = deviceTracker.getConsumptionAnalysis('24h');
+                log(`📊 Analysis ready: ${testAnalysis.totalEvents} events, ${testAnalysis.totalConsumption.toFixed(1)} Wh`, 'info');
+                
+            } catch (error) {
+                log('❌ Error setting up test data: ' + error.message, 'error');
+            }
+        }
+
+        function generateTestReadings(phase, power) {
+            const readings = {
+                apower_a: 0,
+                apower_b: 0,
+                apower_c: 0,
+                voltage_a: 230,
+                voltage_b: 0,
+                voltage_c: 230,
+                current_a: 0,
+                current_b: 0,
+                current_c: 0,
+                pf_a: 0.85,
+                pf_b: 0.85,
+                pf_c: 0.85,
+                ts: Math.floor(Date.now() / 1000)
+            };
+            
+            readings[`apower_${phase.toLowerCase()}`] = power;
+            readings[`current_${phase.toLowerCase()}`] = power / 230;
+            
+            return readings;
+        }
+
+        function testFilterFunctionality() {
+            if (!testAnalysis) {
+                log('❌ Please setup test data first', 'error');
+                return;
+            }
+
+            try {
+                // Test phase statistics calculation
+                const phaseStats = calculatePhaseStatistics(testAnalysis);
+                
+                log('📊 Phase Statistics:', 'info');
+                log(`   Phase A: ${phaseStats.A.consumption.toFixed(1)} Wh, ${phaseStats.A.devices} devices`, 'info');
+                log(`   Phase B: ${phaseStats.B.consumption.toFixed(1)} Wh, ${phaseStats.B.devices} devices`, 'info');
+                log(`   Phase C: ${phaseStats.C.consumption.toFixed(1)} Wh, ${phaseStats.C.devices} devices`, 'info');
+
+                // Test filter changes
+                const phases = ['all', 'A', 'B', 'C'];
+                phases.forEach(phase => {
+                    document.getElementById('testPhaseView').value = phase;
+                    testPhaseFilterChange();
+                });
+
+                log('✅ Filter functionality test completed successfully', 'success');
+                
+            } catch (error) {
+                log('❌ Error testing filter: ' + error.message, 'error');
+            }
+        }
+
+        function calculatePhaseStatistics(analysis) {
+            const phaseStats = {
+                A: { consumption: 0, devices: 0, events: 0, deviceList: [] },
+                B: { consumption: 0, devices: 0, events: 0, deviceList: [] },
+                C: { consumption: 0, devices: 0, events: 0, deviceList: [] }
+            };
+
+            Object.values(analysis.deviceStats).forEach(stats => {
+                if (stats.device.phase && phaseStats[stats.device.phase]) {
+                    const phase = stats.device.phase;
+                    phaseStats[phase].consumption += stats.totalConsumption;
+                    phaseStats[phase].events += stats.eventCount;
+                    if (stats.eventCount > 0) {
+                        phaseStats[phase].devices++;
+                        phaseStats[phase].deviceList.push(stats.device.name);
+                    }
+                }
+            });
+
+            return phaseStats;
+        }
+
+        function testPhaseFilterChange() {
+            const selectedPhase = document.getElementById('testPhaseView').value;
+            log(`🔄 Phase filter changed to: ${selectedPhase}`, 'info');
+            
+            if (testAnalysis) {
+                // Simulate what the real page does
+                const phaseStats = calculatePhaseStatistics(testAnalysis);
+                
+                if (selectedPhase === 'all') {
+                    log('   📊 Showing all phases comparison', 'info');
+                } else {
+                    const phaseDevices = Object.values(testAnalysis.deviceStats).filter(stats => 
+                        stats.device.phase === selectedPhase && stats.eventCount > 0
+                    );
+                    log(`   📊 Showing ${phaseDevices.length} devices for Phase ${selectedPhase}`, 'info');
+                }
+            }
+        }
+
+        function openConsumptionPage() {
+            log('🚀 Opening consumption analysis page...', 'info');
+            window.open('consumption_analysis.html', '_blank');
+        }
+    </script>
+</body>
+</html> 

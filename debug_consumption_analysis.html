@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Consumption Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a2e;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: #28a745; }
+        .error { background: #dc3545; }
+        .info { background: #17a2b8; }
+        .warning { background: #ffc107; color: black; }
+        .debug-section {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        pre {
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Debug Consumption Analysis</h1>
+        
+        <div class="status info">
+            <strong>Purpose:</strong> Debug why consumption analysis is not showing threshold data
+        </div>
+        
+        <button onclick="debugConsumptionAnalysis()" style="padding: 10px 20px; margin: 10px 0; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            Debug Analysis Logic
+        </button>
+        
+        <div id="results"></div>
+        
+        <div class="debug-section">
+            <h3>📊 Threshold Statistics Elements</h3>
+            <div>Low Total: <span id="lowConsumptionTotal">0</span> Wh</div>
+            <div>Low Percentage: <span id="lowConsumptionPercentage">0%</span></div>
+            <div>Medium Total: <span id="mediumConsumptionTotal">0</span> Wh</div>
+            <div>Medium Percentage: <span id="mediumConsumptionPercentage">0%</span></div>
+            <div>High Total: <span id="highConsumptionTotal">0</span> Wh</div>
+            <div>High Percentage: <span id="highConsumptionPercentage">0%</span></div>
+        </div>
+        
+        <div class="debug-section">
+            <h3>📋 Raw Events Data</h3>
+            <pre id="rawEventsData">Loading...</pre>
+        </div>
+    </div>
+
+    <script>
+        async function debugConsumptionAnalysis() {
+            const results = document.getElementById('results');
+            const rawEventsData = document.getElementById('rawEventsData');
+            
+            try {
+                results.innerHTML = '<div class="status info">🔍 Starting debug analysis...</div>';
+                
+                // Step 1: Fetch events
+                console.log('Step 1: Fetching consumption events...');
+                const response = await fetch('consumption_events_for_browser.json');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const events = await response.json();
+                console.log('Events loaded:', events);
+                
+                // Display raw data
+                rawEventsData.textContent = JSON.stringify(events, null, 2);
+                
+                // Step 2: Validate events
+                if (!Array.isArray(events) || events.length === 0) {
+                    results.innerHTML += '<div class="status error">❌ No events found or invalid format</div>';
+                    return;
+                }
+                
+                results.innerHTML += `<div class="status success">✅ Loaded ${events.length} events</div>`;
+                
+                // Step 3: Analyze events
+                console.log('Step 3: Analyzing events...');
+                const stats = {
+                    low: { totalEnergy: 0, count: 0 },
+                    medium: { totalEnergy: 0, count: 0 },
+                    high: { totalEnergy: 0, count: 0 }
+                };
+                
+                events.forEach(event => {
+                    const energy = parseFloat(event.totalEnergy) || 0;
+                    console.log(`Processing event ${event.id}: type=${event.type}, energy=${energy}`);
+                    
+                    switch (event.type) {
+                        case 'LOW':
+                            stats.low.totalEnergy += energy;
+                            stats.low.count++;
+                            break;
+                        case 'MEDIUM':
+                            stats.medium.totalEnergy += energy;
+                            stats.medium.count++;
+                            break;
+                        case 'HIGH':
+                            stats.high.totalEnergy += energy;
+                            stats.high.count++;
+                            break;
+                        default:
+                            console.warn(`Unknown event type: ${event.type}`);
+                    }
+                });
+                
+                console.log('Final stats:', stats);
+                
+                const totalEnergy = stats.low.totalEnergy + stats.medium.totalEnergy + stats.high.totalEnergy;
+                
+                // Step 4: Update UI elements
+                console.log('Step 4: Updating UI elements...');
+                
+                document.getElementById('lowConsumptionTotal').textContent = stats.low.totalEnergy.toFixed(1);
+                document.getElementById('lowConsumptionPercentage').textContent = 
+                    totalEnergy > 0 ? (stats.low.totalEnergy / totalEnergy * 100).toFixed(1) + '%' : '0%';
+                    
+                document.getElementById('mediumConsumptionTotal').textContent = stats.medium.totalEnergy.toFixed(1);
+                document.getElementById('mediumConsumptionPercentage').textContent = 
+                    totalEnergy > 0 ? (stats.medium.totalEnergy / totalEnergy * 100).toFixed(1) + '%' : '0%';
+                    
+                document.getElementById('highConsumptionTotal').textContent = stats.high.totalEnergy.toFixed(1);
+                document.getElementById('highConsumptionPercentage').textContent = 
+                    totalEnergy > 0 ? (stats.high.totalEnergy / totalEnergy * 100).toFixed(1) + '%' : '0%';
+                
+                results.innerHTML += `<div class="status success">
+                    ✅ Analysis complete!<br>
+                    📊 LOW: ${stats.low.count} events, ${stats.low.totalEnergy.toFixed(2)} Wh<br>
+                    📊 MEDIUM: ${stats.medium.count} events, ${stats.medium.totalEnergy.toFixed(2)} Wh<br>
+                    📊 HIGH: ${stats.high.count} events, ${stats.high.totalEnergy.toFixed(2)} Wh<br>
+                    📊 Total Energy: ${totalEnergy.toFixed(2)} Wh
+                </div>`;
+                
+            } catch (error) {
+                results.innerHTML += `<div class="status error">
+                    ❌ Error: ${error.message}
+                </div>`;
+                console.error('Debug error:', error);
+            }
+        }
+        
+        // Auto-run on page load
+        window.addEventListener('DOMContentLoaded', debugConsumptionAnalysis);
+    </script>
+</body>
+</html> 

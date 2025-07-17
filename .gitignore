@@ -1,0 +1,12 @@
+node_modules/*
+package-lock.json
+data/*
+
+server.log
+data/collector-status.json
+data/readings.csv
+shelly-environment-config.json
+shelly-tracking-data.json
+data/collector-status.json
+data/collector.log
+data/readings.csv

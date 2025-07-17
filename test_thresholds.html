@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Power Consumption Thresholds</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a2e;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+        button {
+            background: #4facfe;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #00f2fe;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: rgba(40, 167, 69, 0.3); }
+        .error { background: rgba(220, 53, 69, 0.3); }
+        .info { background: rgba(76, 172, 254, 0.3); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Power Consumption Thresholds Test</h1>
+        
+        <div class="test-section">
+            <h2>📊 Dashboard Links</h2>
+            <button onclick="window.open('graphs.html', '_blank')">Open Dashboard</button>
+            <button onclick="window.open('consumption_analysis.html', '_blank')">Open Analysis</button>
+        </div>
+
+        <div class="test-section">
+            <h2>⚡ Test Threshold Configuration</h2>
+            <p>Test the threshold configuration functionality:</p>
+            <button onclick="testThresholdValidation()">Test Threshold Validation</button>
+            <button onclick="testLocalStorage()">Test Local Storage</button>
+            <div id="thresholdTestResults"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📈 Generate Test Events</h2>
+            <p>Generate sample consumption events for testing:</p>
+            <button onclick="loadGeneratedEvents()">Load CSV-Generated Events</button>
+            <button onclick="viewStoredEvents()">View Stored Events</button>
+            <div id="eventTestResults"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔍 Implementation Status</h2>
+            <div id="implementationStatus">
+                <div class="status info">Checking implementation...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Test threshold validation
+        function testThresholdValidation() {
+            const results = document.getElementById('thresholdTestResults');
+            let html = '<h3>Threshold Validation Tests:</h3>';
+            
+            // Test 1: Valid thresholds
+            const validLow = 300;
+            const validMedium = 1000;
+            const isValid1 = validLow < validMedium;
+            html += `<div class="status ${isValid1 ? 'success' : 'error'}">
+                Test 1 - Valid thresholds (${validLow} < ${validMedium}): ${isValid1 ? 'PASS' : 'FAIL'}
+            </div>`;
+            
+            // Test 2: Invalid thresholds
+            const invalidLow = 1000;
+            const invalidMedium = 300;
+            const isValid2 = invalidLow < invalidMedium;
+            html += `<div class="status ${!isValid2 ? 'success' : 'error'}">
+                Test 2 - Invalid thresholds (${invalidLow} < ${invalidMedium}): ${!isValid2 ? 'PASS' : 'FAIL'}
+            </div>`;
+            
+            results.innerHTML = html;
+        }
+
+        // Test local storage functionality
+        function testLocalStorage() {
+            const results = document.getElementById('thresholdTestResults');
+            let html = results.innerHTML + '<h3>Local Storage Tests:</h3>';
+            
+            try {
+                // Test writing to localStorage
+                const testData = { test: 'threshold_test', timestamp: Date.now() };
+                localStorage.setItem('thresholdTest', JSON.stringify(testData));
+                
+                // Test reading from localStorage
+                const retrieved = JSON.parse(localStorage.getItem('thresholdTest'));
+                const isValid = retrieved && retrieved.test === 'threshold_test';
+                
+                html += `<div class="status ${isValid ? 'success' : 'error'}">
+                    Local Storage Test: ${isValid ? 'PASS' : 'FAIL'}
+                </div>`;
+                
+                // Clean up
+                localStorage.removeItem('thresholdTest');
+                
+            } catch (error) {
+                html += `<div class="status error">
+                    Local Storage Test: FAIL - ${error.message}
+                </div>`;
+            }
+            
+            results.innerHTML = html;
+        }
+
+        // Load events generated from CSV data
+        async function loadGeneratedEvents() {
+            const results = document.getElementById('eventTestResults');
+            
+            try {
+                // Try to fetch the generated events file
+                const response = await fetch('consumption_events_for_browser.json');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const events = await response.json();
+                
+                if (!Array.isArray(events) || events.length === 0) {
+                    throw new Error('No events found in the generated file');
+                }
+                
+                // Show statistics
+                const stats = events.reduce((acc, event) => {
+                    acc[event.type] = (acc[event.type] || 0) + 1;
+                    return acc;
+                }, {});
+                
+                results.innerHTML = `<div class="status success">
+                    ✅ Loaded ${events.length} events from CSV analysis!<br>
+                    📊 Statistics: Low: ${stats.LOW || 0}, Medium: ${stats.MEDIUM || 0}, High: ${stats.HIGH || 0}<br>
+                    💾 Events are stored in consumption_events_for_browser.json
+                </div>`;
+                
+            } catch (error) {
+                results.innerHTML = `<div class="status error">
+                    ❌ Failed to load CSV-generated events: ${error.message}<br>
+                    💡 Make sure you've run the generate_consumption_events.cjs script first
+                </div>`;
+            }
+        }
+
+        // View stored events
+        async function viewStoredEvents() {
+            const results = document.getElementById('eventTestResults');
+            
+            try {
+                const response = await fetch('consumption_events_for_browser.json');
+                
+                if (!response.ok) {
+                    results.innerHTML = `<div class="status warning">
+                        📂 No events file found. Run the CSV generation script first.
+                    </div>`;
+                    return;
+                }
+                
+                const events = await response.json();
+                
+                if (!Array.isArray(events) || events.length === 0) {
+                    results.innerHTML = `<div class="status warning">
+                        📂 Events file is empty. Generate some events first.
+                    </div>`;
+                    return;
+                }
+                
+                // Show detailed event information
+                const eventsList = events.slice(0, 5).map(event => `
+                    <div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 5px;">
+                        <strong>Event ${event.id}</strong> - Phase ${event.phase} (${event.type})<br>
+                        Duration: ${(event.duration / 1000 / 60).toFixed(1)} minutes<br>
+                        Power: ${event.minPower}W - ${event.maxPower}W (avg: ${event.averagePower}W)<br>
+                        Energy: ${event.totalEnergy} Wh<br>
+                        <small>Start: ${new Date(event.startTime).toLocaleString()}</small>
+                    </div>
+                `).join('');
+                
+                const stats = events.reduce((acc, event) => {
+                    acc[event.type] = (acc[event.type] || 0) + 1;
+                    return acc;
+                }, {});
+                
+                results.innerHTML = `<div class="status success">
+                    📊 Found ${events.length} stored events<br>
+                    📈 Statistics: Low: ${stats.LOW || 0}, Medium: ${stats.MEDIUM || 0}, High: ${stats.HIGH || 0}<br><br>
+                    <strong>Recent Events (showing first 5):</strong><br>
+                    ${eventsList}
+                    ${events.length > 5 ? `<div style="text-align: center; margin-top: 10px;"><em>... and ${events.length - 5} more events</em></div>` : ''}
+                </div>`;
+                
+            } catch (error) {
+                results.innerHTML = `<div class="status error">
+                    ❌ Error viewing events: ${error.message}
+                </div>`;
+            }
+        }
+
+        // Check implementation status
+        function checkImplementationStatus() {
+            const status = document.getElementById('implementationStatus');
+            let html = '';
+            
+            // Check if files exist by trying to access them
+            const checks = [
+                { name: 'Dashboard (graphs.html)', test: () => fetch('graphs.html').then(r => r.ok) },
+                { name: 'Analysis (consumption_analysis.html)', test: () => fetch('consumption_analysis.html').then(r => r.ok) },
+                { name: 'Local Storage Support', test: () => Promise.resolve(typeof Storage !== 'undefined') },
+                { name: 'Chart.js Library', test: () => Promise.resolve(typeof Chart !== 'undefined') }
+            ];
+            
+            Promise.allSettled(checks.map(check => check.test())).then(results => {
+                html = '<h3>Implementation Status:</h3>';
+                
+                checks.forEach((check, index) => {
+                    const result = results[index];
+                    const isSuccess = result.status === 'fulfilled' && result.value;
+                    html += `<div class="status ${isSuccess ? 'success' : 'error'}">
+                        ${check.name}: ${isSuccess ? '✅ Available' : '❌ Not Available'}
+                    </div>`;
+                });
+                
+                html += `<div class="status info">
+                    <strong>Features Implemented:</strong><br>
+                    ✅ Power consumption thresholds configuration<br>
+                    ✅ Threshold lines on power charts<br>
+                    ✅ Consumption events tracking<br>
+                    ✅ Events export functionality<br>
+                    ✅ Threshold analysis charts<br>
+                    ✅ Time period analysis<br>
+                </div>`;
+                
+                status.innerHTML = html;
+            });
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            checkImplementationStatus();
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Environment Setup - Shelly 3EM Settings</title>
+    <script src="device-tracking.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nav-buttons {
+            margin-bottom: 20px;
+        }
+        
+        .nav-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s;
+        }
+        
+        .nav-btn:hover {
+            background: #5a6fd8;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .section h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background: #218838;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .btn-clone {
+            background: #17a2b8;
+        }
+        
+        .btn-clone:hover {
+            background: #138496;
+        }
+        
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+        }
+        
+        .list-item:hover {
+            background: #e9ecef;
+        }
+        
+        .list-item-content {
+            flex-grow: 1;
+        }
+        
+        .list-item-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .device-details {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .phase-indicator {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        
+        .phase-a { background: #f39c12; color: white; }
+        .phase-b { background: #ff6b6b; color: white; }
+        .phase-c { background: #4ecdc4; color: white; }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 600px;
+            position: relative;
+        }
+        
+        .close-btn {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .close-btn:hover {
+            color: #333;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .status-message {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .device-type-manager {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+        
+        .device-type-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .device-type-tag {
+            background: #e9ecef;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .device-type-tag button {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .device-type-wattage {
+            color: #666;
+            font-size: 11px;
+            font-weight: normal;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 Environment Setup</h1>
+            <p>Configure rooms and devices for your Shelly Pro 3EM electrical monitoring system</p>
+        </div>
+        
+        <div class="nav-buttons">
+            <a href="graphs.html" class="nav-btn">📊 Dashboard</a>
+            <a href="settings.html" class="nav-btn">⚙️ Settings</a>
+        </div>
+        
+        <div id="statusMessage"></div>
+        
+        <!-- Rooms Section -->
+        <div class="section">
+            <h2>🏠 Rooms Management</h2>
+            <div class="form-group">
+                <label for="roomName">Room Name:</label>
+                <input type="text" id="roomName" placeholder="Enter room name (e.g., Living Room, Kitchen)">
+            </div>
+            <button class="btn" onclick="addRoom()">Add Room</button>
+            
+            <div id="roomsList" style="margin-top: 20px;">
+                <!-- Rooms will be populated here -->
+            </div>
+        </div>
+        
+        <!-- Devices Section -->
+        <div class="section">
+            <h2>🔌 Devices Management</h2>
+            <button class="btn" onclick="showAddDeviceModal()">Add Device</button>
+            
+            <div id="devicesList" style="margin-top: 20px;">
+                <!-- Devices will be populated here -->
+            </div>
+            
+            <!-- Device Types Manager -->
+            <div class="device-type-manager">
+                <h3>Device Types</h3>
+                <div class="form-group">
+                    <label for="newDeviceType">Add New Device Type:</label>
+                    <input type="text" id="newDeviceType" placeholder="Enter device type name">
+                </div>
+                <div class="form-group">
+                    <label for="newDeviceTypeWattage">Maximum Wattage (W):</label>
+                    <input type="number" id="newDeviceTypeWattage" placeholder="Enter maximum wattage" min="0" step="0.1">
+                </div>
+                <button class="btn btn-secondary" onclick="addDeviceType()">Add Device Type</button>
+                
+                <div class="device-type-list" id="deviceTypesList">
+                    <!-- Device types will be populated here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Device Tracking Statistics -->
+        <div class="section">
+            <h2>🎯 Device Tracking Statistics</h2>
+            <div id="trackingStats">
+                <!-- Tracking statistics will be populated here -->
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="exportTrackingData()">Export Tracking Data</button>
+                <button class="btn btn-secondary" onclick="importTrackingData()">Import Tracking Data</button>
+                <input type="file" id="trackingFileInput" accept=".json" style="display: none;" onchange="handleTrackingImport(event)">
+            </div>
+        </div>
+        
+        <!-- Configuration Export/Import -->
+        <div class="section">
+            <h2>💾 Configuration Management</h2>
+            <button class="btn btn-secondary" onclick="exportConfig()">Export Configuration</button>
+            <button class="btn btn-secondary" onclick="importConfig()">Import Configuration</button>
+            <input type="file" id="configFileInput" accept=".json" style="display: none;" onchange="handleConfigImport(event)">
+            
+            <div style="margin-top: 15px;">
+                <h4>Current Configuration Summary:</h4>
+                <div id="configSummary">
+                    <!-- Configuration summary will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add/Edit Device Modal -->
+    <div id="deviceModal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeDeviceModal()">&times;</button>
+            <h3 id="deviceModalTitle">Add Device</h3>
+            
+            <form id="deviceForm">
+                <div class="form-group">
+                    <label for="deviceName">Device Name:</label>
+                    <input type="text" id="deviceName" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="deviceRoom">Room:</label>
+                        <select id="deviceRoom" required>
+                            <option value="">Select a room</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="deviceType">Device Type:</label>
+                        <select id="deviceType" required>
+                            <option value="">Select device type</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="devicePhase">Electrical Phase:</label>
+                        <select id="devicePhase" required>
+                            <option value="">Select phase</option>
+                            <option value="A">Phase A</option>
+                            <option value="B">Phase B</option>
+                            <option value="C">Phase C</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="peakPower">Peak Power (W):</label>
+                        <input type="number" id="peakPower" min="0" step="0.1" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="averagePower">Average Power (W):</label>
+                    <input type="number" id="averagePower" min="0" step="0.1" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="deviceNotes">Notes (optional):</label>
+                    <textarea id="deviceNotes" rows="3" placeholder="Additional notes about this device"></textarea>
+                </div>
+                
+                <button type="submit" class="btn">Save Device</button>
+                <button type="button" class="btn btn-secondary" onclick="closeDeviceModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+    
+    <script src="config-manager.js"></script>
+    <script>
+        // Configuration object
+        let config = {
+            rooms: [],
+            devices: [],
+            deviceTypes: [
+                'computer',
+                'cucina a induzione',
+                'dispositivo generico',
+                'forno microonde',
+                'lampada da tavolo',
+                'luce a soffitto',
+                'split',
+                'stampante'
+            ]
+        };
+        
+        let editingDeviceId = null;
+        let configManager = null;
+        
+        // Add caching for appliances data to prevent repeated API calls
+        let appliancesCache = null;
+        let appliancesCacheTimestamp = 0;
+        const appliancesCacheTTL = 300000; // 5 minutes cache TTL
+        
+        // Function to get cached appliances data
+        async function getCachedAppliancesData() {
+            const now = Date.now();
+            
+            // Return cached data if it's still valid
+            if (appliancesCache && (now - appliancesCacheTimestamp) < appliancesCacheTTL) {
+                return appliancesCache;
+            }
+            
+            try {
+                const response = await fetch('/api/get-appliances');
+                if (response.ok) {
+                    const data = await response.json();
+                    appliancesCache = data.appliances || {};
+                    appliancesCacheTimestamp = now;
+                    return appliancesCache;
+                } else {
+                    console.warn('Failed to fetch appliances data, using cached data if available');
+                    return appliancesCache || {};
+                }
+            } catch (error) {
+                console.error('Error fetching appliances data:', error);
+                return appliancesCache || {};
+            }
+        }
+        
+        // Function to clear appliances cache
+        function clearAppliancesCache() {
+            appliancesCache = null;
+            appliancesCacheTimestamp = 0;
+        }
+        
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', async function() {
+            await initializeConfigManager();
+            await loadConfig();
+            await updateUI();
+            updateTrackingStats();
+        });
+
+        // Initialize configuration manager
+        async function initializeConfigManager() {
+            try {
+                configManager = new ConfigManager();
+                await configManager.initialize();
+                console.log('Settings page: ConfigManager initialized');
+            } catch (error) {
+                console.error('Error initializing ConfigManager in settings:', error);
+                configManager = null;
+            }
+        }
+        
+        // Load configuration from file or localStorage
+        async function loadConfig() {
+            try {
+                if (configManager) {
+                    config = configManager.getConfig();
+                    console.log('Configuration loaded from file');
+                } else {
+                    // Fallback to localStorage
+                    const savedConfig = localStorage.getItem('shellyEnvironmentConfig');
+                    if (savedConfig) {
+                        config = JSON.parse(savedConfig);
+                        console.log('Configuration loaded from localStorage (fallback)');
+                    }
+                }
+                
+                // Load device types from server (Appliances.csv)
+                try {
+                    const response = await fetch('/api/get-device-types');
+                    if (response.ok) {
+                        const data = await response.json();
+                        config.deviceTypes = data.deviceTypes || [];
+                        console.log(`Loaded ${config.deviceTypes.length} device types from server`);
+                    } else {
+                        console.warn('Failed to load device types from server, using defaults');
+                        // Fallback to default device types if server fails
+                        if (!config.deviceTypes || config.deviceTypes.length === 0) {
+                            config.deviceTypes = [
+                                'Computer - desktop PC',
+                                'Computer - notebook PC',
+                                'Microwave oven',
+                                'Television, LCD',
+                                'Refrigerator'
+                            ];
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading device types from server:', error);
+                    // Fallback to default device types
+                    if (!config.deviceTypes || config.deviceTypes.length === 0) {
+                        config.deviceTypes = [
+                            'Computer - desktop PC',
+                            'Computer - notebook PC',
+                            'Microwave oven',
+                            'Television, LCD',
+                            'Refrigerator'
+                        ];
+                    }
+                }
+                
+                // Sort device types alphabetically
+                config.deviceTypes.sort();
+                
+            } catch (error) {
+                console.error('Error loading config:', error);
+                showStatus('Error loading configuration', 'error');
+            }
+        }
+        
+        // Save configuration to file or localStorage
+        async function saveConfig() {
+            try {
+                if (configManager) {
+                    await configManager.updateConfig(config);
+                    showStatus('Configuration saved to file successfully', 'success');
+                } else {
+                    // Fallback to localStorage
+                    localStorage.setItem('shellyEnvironmentConfig', JSON.stringify(config));
+                    showStatus('Configuration saved to localStorage (fallback)', 'success');
+                }
+            } catch (error) {
+                console.error('Error saving config:', error);
+                showStatus('Error saving configuration', 'error');
+            }
+        }
+        
+        // Show status message
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.innerHTML = `<div class="status-message status-${type}">${message}</div>`;
+            setTimeout(() => {
+                statusDiv.innerHTML = '';
+            }, 3000);
+        }
+        
+        // Update all UI elements
+        async function updateUI() {
+            updateRoomsList();
+            updateDevicesList();
+            await updateDeviceTypesList();
+            updateConfigSummary();
+            updateModalSelects();
+        }
+        
+        // Room management functions
+        async function addRoom() {
+            const roomName = document.getElementById('roomName').value.trim();
+            if (!roomName) {
+                showStatus('Please enter a room name', 'error');
+                return;
+            }
+            
+            if (config.rooms.find(room => room.name.toLowerCase() === roomName.toLowerCase())) {
+                showStatus('Room already exists', 'error');
+                return;
+            }
+            
+            const room = {
+                id: Date.now().toString(),
+                name: roomName,
+                createdAt: new Date().toISOString()
+            };
+            
+            config.rooms.push(room);
+            config.rooms.sort((a, b) => a.name.localeCompare(b.name));
+            
+            document.getElementById('roomName').value = '';
+            await saveConfig();
+            await updateUI();
+            showStatus(`Room "${roomName}" added successfully`, 'success');
+        }
+        
+        async function editRoom(roomId) {
+            const room = config.rooms.find(r => r.id === roomId);
+            if (!room) return;
+            
+            const newName = prompt('Enter new room name:', room.name);
+            if (newName && newName.trim() && newName.trim() !== room.name) {
+                const trimmedName = newName.trim();
+                
+                // Check if name already exists
+                if (config.rooms.find(r => r.id !== roomId && r.name.toLowerCase() === trimmedName.toLowerCase())) {
+                    showStatus('Room name already exists', 'error');
+                    return;
+                }
+                
+                room.name = trimmedName;
+                config.rooms.sort((a, b) => a.name.localeCompare(b.name));
+                saveConfig();
+                await updateUI();
+                showStatus(`Room renamed to "${trimmedName}"`, 'success');
+            }
+        }
+        
+        async function deleteRoom(roomId) {
+            const room = config.rooms.find(r => r.id === roomId);
+            if (!room) return;
+            
+            // Check if room has devices
+            const devicesInRoom = config.devices.filter(d => d.roomId === roomId);
+            if (devicesInRoom.length > 0) {
+                if (!confirm(`Room "${room.name}" contains ${devicesInRoom.length} device(s). Deleting the room will also delete all devices in it. Continue?`)) {
+                    return;
+                }
+                // Remove devices in this room
+                config.devices = config.devices.filter(d => d.roomId !== roomId);
+            } else {
+                if (!confirm(`Are you sure you want to delete room "${room.name}"?`)) {
+                    return;
+                }
+            }
+            
+            config.rooms = config.rooms.filter(r => r.id !== roomId);
+            saveConfig();
+            await updateUI();
+            showStatus(`Room "${room.name}" deleted`, 'success');
+        }
+        
+        function updateRoomsList() {
+            const roomsList = document.getElementById('roomsList');
+            if (config.rooms.length === 0) {
+                roomsList.innerHTML = '<p style="color: #666; font-style: italic;">No rooms configured. Add a room to get started.</p>';
+                return;
+            }
+            
+            roomsList.innerHTML = config.rooms.map(room => {
+                const deviceCount = config.devices.filter(d => d.roomId === room.id).length;
+                return `
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <strong>${room.name}</strong>
+                            <div class="device-details">${deviceCount} device(s)</div>
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn btn-secondary" onclick="editRoom('${room.id}')">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteRoom('${room.id}')">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Device management functions
+        function showAddDeviceModal() {
+            editingDeviceId = null;
+            document.getElementById('deviceModalTitle').textContent = 'Add Device';
+            document.getElementById('deviceForm').reset();
+            updateModalSelects();
+            document.getElementById('deviceModal').style.display = 'block';
+        }
+        
+        function showEditDeviceModal(deviceId) {
+            const device = config.devices.find(d => d.id === deviceId);
+            if (!device) return;
+            
+            editingDeviceId = deviceId;
+            document.getElementById('deviceModalTitle').textContent = 'Edit Device';
+            
+            // Update dropdown options first
+            updateModalSelects();
+            
+            // Then populate form values (including dropdowns)
+            document.getElementById('deviceName').value = device.name;
+            document.getElementById('deviceRoom').value = device.roomId;
+            document.getElementById('deviceType').value = device.type;
+            document.getElementById('devicePhase').value = device.phase;
+            document.getElementById('peakPower').value = device.peakPower;
+            document.getElementById('averagePower').value = device.averagePower;
+            document.getElementById('deviceNotes').value = device.notes || '';
+            
+            document.getElementById('deviceModal').style.display = 'block';
+        }
+        
+        function showCloneDeviceModal(deviceId) {
+            const device = config.devices.find(d => d.id === deviceId);
+            if (!device) return;
+            
+            editingDeviceId = null; // This is a new device, not editing existing
+            document.getElementById('deviceModalTitle').textContent = 'Clone Device';
+            
+            // Update dropdown options first
+            updateModalSelects();
+            
+            // Then populate form values with cloned data (including dropdowns)
+            document.getElementById('deviceName').value = device.name + ' (Copy)';
+            document.getElementById('deviceRoom').value = device.roomId;
+            document.getElementById('deviceType').value = device.type;
+            document.getElementById('devicePhase').value = device.phase;
+            document.getElementById('peakPower').value = device.peakPower;
+            document.getElementById('averagePower').value = device.averagePower;
+            document.getElementById('deviceNotes').value = device.notes || '';
+            
+            document.getElementById('deviceModal').style.display = 'block';
+        }
+        
+        function closeDeviceModal() {
+            document.getElementById('deviceModal').style.display = 'none';
+            editingDeviceId = null;
+        }
+        
+        function updateModalSelects() {
+            // Update rooms dropdown
+            const roomSelect = document.getElementById('deviceRoom');
+            roomSelect.innerHTML = '<option value="">Select a room</option>' +
+                config.rooms.map(room => `<option value="${room.id}">${room.name}</option>`).join('');
+            
+            // Update device types dropdown
+            const typeSelect = document.getElementById('deviceType');
+            typeSelect.innerHTML = '<option value="">Select device type</option>' +
+                config.deviceTypes.map(type => `<option value="${type}">${type}</option>`).join('');
+            
+            // Add event listener for device type selection to suggest consumption
+            typeSelect.addEventListener('change', handleDeviceTypeChange);
+        }
+        
+        // Handle device type selection to suggest consumption
+        async function handleDeviceTypeChange(event) {
+            const selectedType = event.target.value;
+            if (!selectedType || !configManager) return;
+            
+            try {
+                const suggestion = await configManager.getSuggestedConsumption(selectedType);
+                
+                if (suggestion.available) {
+                    const peakPowerField = document.getElementById('peakPower');
+                    const averagePowerField = document.getElementById('averagePower');
+                    
+                    // Only suggest if fields are empty
+                    if (!peakPowerField.value) {
+                        peakPowerField.value = suggestion.suggestedConsumption;
+                        peakPowerField.style.backgroundColor = '#e8f5e8'; // Light green background
+                    }
+                    
+                    if (!averagePowerField.value) {
+                        // Suggest average as 80% of peak consumption
+                        const avgConsumption = Math.round(suggestion.suggestedConsumption * 0.8);
+                        averagePowerField.value = avgConsumption;
+                        averagePowerField.style.backgroundColor = '#e8f5e8'; // Light green background
+                    }
+                    
+                    // Show a helpful message
+                    const matchText = suggestion.matchType === 'exact' ? 'exact match' : 'similar device';
+                    showStatus(`💡 Suggested consumption from ${matchText}: ${suggestion.suggestedConsumption}W`, 'success');
+                } else {
+                    // Clear any previous suggestions styling
+                    document.getElementById('peakPower').style.backgroundColor = '';
+                    document.getElementById('averagePower').style.backgroundColor = '';
+                }
+            } catch (error) {
+                console.error('Error getting consumption suggestion:', error);
+            }
+        }
+        
+        // Clear suggestion styling when user manually edits power fields
+        function clearSuggestionStyling() {
+            document.getElementById('peakPower').style.backgroundColor = '';
+            document.getElementById('averagePower').style.backgroundColor = '';
+        }
+        
+        // Add event listeners to power fields to clear suggestion styling
+        document.addEventListener('DOMContentLoaded', function() {
+            const peakPowerField = document.getElementById('peakPower');
+            const averagePowerField = document.getElementById('averagePower');
+            
+            if (peakPowerField) {
+                peakPowerField.addEventListener('input', clearSuggestionStyling);
+            }
+            
+            if (averagePowerField) {
+                averagePowerField.addEventListener('input', clearSuggestionStyling);
+            }
+        });
+        
+        // Handle device form submission
+        document.getElementById('deviceForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const deviceData = {
+                name: document.getElementById('deviceName').value.trim(),
+                roomId: document.getElementById('deviceRoom').value,
+                type: document.getElementById('deviceType').value,
+                phase: document.getElementById('devicePhase').value,
+                peakPower: parseFloat(document.getElementById('peakPower').value),
+                averagePower: parseFloat(document.getElementById('averagePower').value),
+                notes: document.getElementById('deviceNotes').value.trim()
+            };
+            
+            if (editingDeviceId) {
+                // Edit existing device
+                const device = config.devices.find(d => d.id === editingDeviceId);
+                if (device) {
+                    Object.assign(device, deviceData);
+                    device.updatedAt = new Date().toISOString();
+                    showStatus(`Device "${deviceData.name}" updated successfully`, 'success');
+                }
+            } else {
+                // Add new device
+                const device = {
+                    id: Date.now().toString(),
+                    ...deviceData,
+                    createdAt: new Date().toISOString()
+                };
+                config.devices.push(device);
+                showStatus(`Device "${deviceData.name}" added successfully`, 'success');
+            }
+            
+            saveConfig();
+            await updateUI();
+            closeDeviceModal();
+        });
+        
+        async function deleteDevice(deviceId) {
+            const device = config.devices.find(d => d.id === deviceId);
+            if (!device) return;
+            
+            if (confirm(`Are you sure you want to delete device "${device.name}"?`)) {
+                config.devices = config.devices.filter(d => d.id !== deviceId);
+                saveConfig();
+                await updateUI();
+                showStatus(`Device "${device.name}" deleted`, 'success');
+            }
+        }
+        
+        function updateDevicesList() {
+            const devicesList = document.getElementById('devicesList');
+            if (config.devices.length === 0) {
+                devicesList.innerHTML = '<p style="color: #666; font-style: italic;">No devices configured. Add a device to get started.</p>';
+                return;
+            }
+            
+            devicesList.innerHTML = config.devices.map(device => {
+                const room = config.rooms.find(r => r.id === device.roomId);
+                const roomName = room ? room.name : 'Unknown Room';
+                const phaseClass = `phase-${device.phase.toLowerCase()}`;
+                
+                return `
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <strong>${device.name}</strong>
+                            <div class="device-details">
+                                <span class="phase-indicator ${phaseClass}">Phase ${device.phase}</span>
+                                📍 ${roomName} | 🔧 ${device.type} | 
+                                ⚡ Peak: ${device.peakPower}W | 📊 Avg: ${device.averagePower}W
+                                ${device.notes ? `<br>📝 ${device.notes}` : ''}
+                            </div>
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn btn-secondary" onclick="showEditDeviceModal('${device.id}')">Edit</button>
+                            <button class="btn btn-clone" onclick="showCloneDeviceModal('${device.id}')">📋 Clone</button>
+                            <button class="btn btn-danger" onclick="deleteDevice('${device.id}')">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Device type management
+        async function addDeviceType() {
+            const newType = document.getElementById('newDeviceType').value.trim();
+            const newWattage = parseFloat(document.getElementById('newDeviceTypeWattage').value);
+            
+            if (!newType) {
+                showStatus('Please enter a device type name', 'error');
+                return;
+            }
+            
+            if (isNaN(newWattage) || newWattage < 0) {
+                showStatus('Please enter a valid wattage value (0 or greater)', 'error');
+                return;
+            }
+            
+            // Check if device type already exists (case-insensitive)
+            const existingType = config.deviceTypes.find(type => 
+                type.toLowerCase() === newType.toLowerCase()
+            );
+            
+            if (existingType) {
+                showStatus('Device type already exists', 'error');
+                return;
+            }
+            
+            try {
+                // Save to server CSV file
+                const response = await fetch('/api/add-device-type', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        deviceType: newType,
+                        wattage: newWattage
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.error || 'Failed to add device type to CSV file');
+                }
+                
+                // Clear form fields
+                document.getElementById('newDeviceType').value = '';
+                document.getElementById('newDeviceTypeWattage').value = '';
+                
+                // Refresh appliances data in DeviceTracker if available
+                if (typeof DeviceTracker !== 'undefined' && window.deviceTracker) {
+                    await window.deviceTracker.refreshAppliancesData();
+                }
+                
+                // Clear local appliances cache since data was modified
+                clearAppliancesCache();
+                
+                // Reload device types from server and update UI
+                await loadConfig();
+                await updateUI();
+                showStatus(`Device type "${newType}" added successfully with ${newWattage}W maximum power`, 'success');
+                
+            } catch (error) {
+                console.error('Error adding device type:', error);
+                showStatus(`Error adding device type: ${error.message}`, 'error');
+            }
+        }
+        
+        async function removeDeviceType(type) {
+            // Check if any devices use this type
+            const devicesUsingType = config.devices.filter(d => d.type === type);
+            if (devicesUsingType.length > 0) {
+                showStatus(`Cannot remove device type "${type}" - it's used by ${devicesUsingType.length} device(s)`, 'error');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to remove device type "${type}"?`)) {
+                try {
+                    // Remove from server CSV file
+                    const response = await fetch('/api/remove-device-type', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            deviceType: type
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Server error: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (!result.success) {
+                        throw new Error(result.error || 'Failed to remove device type from CSV file');
+                    }
+                    
+                    // Refresh appliances data in DeviceTracker if available
+                    if (typeof DeviceTracker !== 'undefined' && window.deviceTracker) {
+                        await window.deviceTracker.refreshAppliancesData();
+                    }
+                    
+                    // Clear local appliances cache since data was modified
+                    clearAppliancesCache();
+                    
+                    // Reload device types from server and update UI
+                    await loadConfig();
+                    await updateUI();
+                    showStatus(`Device type "${type}" removed successfully`, 'success');
+                    
+                } catch (error) {
+                    console.error('Error removing device type:', error);
+                    showStatus(`Error removing device type: ${error.message}`, 'error');
+                }
+            }
+        }
+        
+        async function updateDeviceTypesList() {
+            const typesList = document.getElementById('deviceTypesList');
+            
+            try {
+                // Fetch appliances data to get wattage information
+                const appliances = await getCachedAppliancesData();
+                
+                typesList.innerHTML = config.deviceTypes.map(type => {
+                    const wattage = appliances[type];
+                    const wattageDisplay = wattage !== undefined ? ` (${wattage}W)` : ' (No wattage data)';
+                    
+                    return `
+                        <div class="device-type-tag">
+                            <span class="device-type-name">${type}</span>
+                            <span class="device-type-wattage">${wattageDisplay}</span>
+                            <button onclick="removeDeviceType('${type}')" title="Remove device type">&times;</button>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Error loading appliances data:', error);
+                // Fallback to simple display without wattage
+                typesList.innerHTML = config.deviceTypes.map(type => `
+                    <div class="device-type-tag">
+                        <span class="device-type-name">${type}</span>
+                        <span class="device-type-wattage"> (Wattage unavailable)</span>
+                        <button onclick="removeDeviceType('${type}')" title="Remove device type">&times;</button>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        // Configuration management
+        function updateConfigSummary() {
+            const summary = document.getElementById('configSummary');
+            const devicesByPhase = {
+                A: config.devices.filter(d => d.phase === 'A').length,
+                B: config.devices.filter(d => d.phase === 'B').length,
+                C: config.devices.filter(d => d.phase === 'C').length
+            };
+            
+            summary.innerHTML = `
+                <p><strong>Rooms:</strong> ${config.rooms.length}</p>
+                <p><strong>Devices:</strong> ${config.devices.length} total 
+                   (Phase A: ${devicesByPhase.A}, Phase B: ${devicesByPhase.B}, Phase C: ${devicesByPhase.C})</p>
+                <p><strong>Device Types:</strong> ${config.deviceTypes.length}</p>
+            `;
+        }
+        
+        function exportConfig() {
+            const configData = {
+                ...config,
+                exportedAt: new Date().toISOString(),
+                version: '1.0'
+            };
+            
+            const blob = new Blob([JSON.stringify(configData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `shelly-environment-config-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showStatus('Configuration exported successfully', 'success');
+        }
+        
+        function importConfig() {
+            document.getElementById('configFileInput').click();
+        }
+        
+        async function handleConfigImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const importedConfig = JSON.parse(e.target.result);
+                    
+                    // Validate imported config
+                    if (!importedConfig.rooms || !importedConfig.devices || !importedConfig.deviceTypes) {
+                        throw new Error('Invalid configuration file format');
+                    }
+                    
+                    if (confirm('This will replace your current configuration. Are you sure?')) {
+                        config = {
+                            rooms: importedConfig.rooms || [],
+                            devices: importedConfig.devices || [],
+                            deviceTypes: importedConfig.deviceTypes || []
+                        };
+                        
+                        // Ensure device types are sorted
+                        config.deviceTypes.sort();
+                        
+                        saveConfig();
+                        await updateUI();
+                        showStatus('Configuration imported successfully', 'success');
+                    }
+                } catch (error) {
+                    console.error('Import error:', error);
+                    showStatus('Error importing configuration: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+            
+            // Reset file input
+            event.target.value = '';
+        }
+        
+        // Device tracking functions
+        function updateTrackingStats() {
+            const trackingStatsDiv = document.getElementById('trackingStats');
+            
+            // Load device tracker if not already loaded
+            if (typeof DeviceTracker === 'undefined') {
+                trackingStatsDiv.innerHTML = '<p style="color: #666; font-style: italic;">Device tracking not available. Please visit the dashboard first.</p>';
+                return;
+            }
+            
+            try {
+                // Create a temporary tracker to get stats
+                const tempTracker = new DeviceTracker();
+                const stats = tempTracker.getTrackingStats();
+                
+                let deviceBreakdownHtml = '';
+                if (Object.keys(stats.deviceBreakdown).length > 0) {
+                    deviceBreakdownHtml = '<h5>Device Associations:</h5><ul>';
+                    Object.entries(stats.deviceBreakdown).forEach(([deviceId, count]) => {
+                        const device = config.devices.find(d => d.id === deviceId);
+                        const deviceName = device ? device.name : 'Unknown Device';
+                        deviceBreakdownHtml += `<li>${deviceName}: ${count} events</li>`;
+                    });
+                    deviceBreakdownHtml += '</ul>';
+                }
+                
+                trackingStatsDiv.innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px;">
+                            <h4 style="margin-top: 0;">Total Associations</h4>
+                            <div style="font-size: 24px; font-weight: bold; color: #667eea;">${stats.totalAssociations}</div>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px;">
+                            <h4 style="margin-top: 0;">Manual vs Auto</h4>
+                            <div>Manual: ${stats.manualAssociations}</div>
+                            <div>Auto: ${stats.autoAssociations}</div>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px;">
+                            <h4 style="margin-top: 0;">By Phase</h4>
+                            <div>Phase A: ${stats.phaseBreakdown.A}</div>
+                            <div>Phase B: ${stats.phaseBreakdown.B}</div>
+                            <div>Phase C: ${stats.phaseBreakdown.C}</div>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px;">
+                            <h4 style="margin-top: 0;">Event Types</h4>
+                            <div>Peaks: ${stats.typeBreakdown.peak}</div>
+                            <div>Valleys: ${stats.typeBreakdown.valley}</div>
+                        </div>
+                    </div>
+                    ${deviceBreakdownHtml}
+                `;
+            } catch (error) {
+                trackingStatsDiv.innerHTML = '<p style="color: #666; font-style: italic;">Error loading tracking statistics.</p>';
+            }
+        }
+        
+        function exportTrackingData() {
+            if (typeof DeviceTracker === 'undefined') {
+                showStatus('Device tracking not available', 'error');
+                return;
+            }
+            
+            try {
+                const tracker = new DeviceTracker();
+                const trackingData = tracker.exportTrackingData();
+                
+                const blob = new Blob([trackingData], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `shelly-tracking-data-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showStatus('Tracking data exported successfully', 'success');
+            } catch (error) {
+                showStatus('Error exporting tracking data', 'error');
+            }
+        }
+        
+        function importTrackingData() {
+            document.getElementById('trackingFileInput').click();
+        }
+        
+        function handleTrackingImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (typeof DeviceTracker === 'undefined') {
+                showStatus('Device tracking not available', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const tracker = new DeviceTracker();
+                    const success = tracker.importTrackingData(e.target.result);
+                    
+                    if (success) {
+                        updateTrackingStats();
+                        showStatus('Tracking data imported successfully', 'success');
+                    } else {
+                        showStatus('Error importing tracking data', 'error');
+                    }
+                } catch (error) {
+                    console.error('Import error:', error);
+                    showStatus('Error importing tracking data: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+            
+            // Reset file input
+            event.target.value = '';
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('deviceModal');
+            if (event.target === modal) {
+                closeDeviceModal();
+            }
+        }
+    </script>
+</body>
+</html> 

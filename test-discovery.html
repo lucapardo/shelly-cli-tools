@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shelly Discovery Test</title>
+    <script src="shelly-discovery.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .device-list {
+            margin-top: 15px;
+        }
+        .device-item {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Shelly Discovery Test</h1>
+    
+    <div class="test-section">
+        <h2>Discovery Class Test</h2>
+        <button onclick="testDiscoveryClass()">Test Discovery Class</button>
+        <div id="classTestResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>IP Detection Test</h2>
+        <button onclick="testIPDetection()">Test Local IP Detection</button>
+        <div id="ipTestResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Device Detection Test</h2>
+        <button onclick="testDeviceDetection()">Test Device Detection Logic</button>
+        <div id="deviceTestResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Live Discovery Test</h2>
+        <button onclick="startLiveTest()">Start Live Discovery</button>
+        <button onclick="stopLiveTest()">Stop Discovery</button>
+        <div id="liveTestResult"></div>
+        <div id="discoveredDevicesList" class="device-list"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Specific IP Test</h2>
+        <input type="text" id="testIP" value="192.168.1.51" placeholder="Enter IP address">
+        <button onclick="testSpecificIP()">Test Specific IP</button>
+        <button onclick="quickPingTest()">Quick Ping Test</button>
+        <button onclick="testTargetedRange()">Test 192.168.1.x Range</button>
+        <div id="specificIPResult"></div>
+    </div>
+
+    <script>
+        let discovery = null;
+        
+        function addResult(containerId, message, type = 'info') {
+            const container = document.getElementById(containerId);
+            const result = document.createElement('div');
+            result.className = `result ${type}`;
+            result.innerHTML = message;
+            container.appendChild(result);
+        }
+        
+        function clearResults(containerId) {
+            document.getElementById(containerId).innerHTML = '';
+        }
+        
+        function testDiscoveryClass() {
+            clearResults('classTestResult');
+            
+            try {
+                discovery = new ShellyDiscovery();
+                addResult('classTestResult', '✅ ShellyDiscovery class instantiated successfully', 'success');
+                
+                // Test methods exist
+                const methods = ['discoverDevices', 'stopDiscovery', 'getDiscoveredDevices', 'clearDiscoveredDevices'];
+                methods.forEach(method => {
+                    if (typeof discovery[method] === 'function') {
+                        addResult('classTestResult', `✅ Method ${method} exists`, 'success');
+                    } else {
+                        addResult('classTestResult', `❌ Method ${method} missing`, 'error');
+                    }
+                });
+                
+                // Test properties
+                const properties = ['discoveredDevices', 'isScanning'];
+                properties.forEach(prop => {
+                    if (discovery.hasOwnProperty(prop)) {
+                        addResult('classTestResult', `✅ Property ${prop} exists`, 'success');
+                    } else {
+                        addResult('classTestResult', `❌ Property ${prop} missing`, 'error');
+                    }
+                });
+                
+            } catch (error) {
+                addResult('classTestResult', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testIPDetection() {
+            clearResults('ipTestResult');
+            
+            if (!discovery) {
+                discovery = new ShellyDiscovery();
+            }
+            
+            try {
+                addResult('ipTestResult', '🔍 Testing local IP detection...', 'info');
+                const baseIP = await discovery.getLocalIPBase();
+                
+                if (baseIP) {
+                    addResult('ipTestResult', `✅ Local IP base detected: ${baseIP}`, 'success');
+                    addResult('ipTestResult', `📡 Will scan range: ${baseIP}.1-254`, 'info');
+                } else {
+                    addResult('ipTestResult', '⚠️ Could not detect local IP, will use common ranges', 'info');
+                }
+            } catch (error) {
+                addResult('ipTestResult', `❌ IP detection error: ${error.message}`, 'error');
+            }
+        }
+        
+        function testDeviceDetection() {
+            clearResults('deviceTestResult');
+            
+            if (!discovery) {
+                discovery = new ShellyDiscovery();
+            }
+            
+            // Test device detection with sample data
+            const testCases = [
+                {
+                    name: 'Shelly Pro 3EM',
+                    data: { type: 'SHELLY_PRO_3EM', mac: '2CBCBBA658D4', fw: '1.0.0' },
+                    endpoint: '/shelly',
+                    expected: true
+                },
+                {
+                    name: 'Shelly Pro 3EM (via /status)',
+                    data: { emeters: [{}], mac: '2CBCBBA658D4' },
+                    endpoint: '/status',
+                    expected: true
+                },
+                {
+                    name: 'Generic Router',
+                    data: { model: 'Router', version: '1.0' },
+                    endpoint: '/status',
+                    expected: false
+                },
+                {
+                    name: 'Shelly 1PM',
+                    data: { device: { type: 'SHELLY1PM' }, relays: [{}] },
+                    endpoint: '/settings',
+                    expected: true
+                },
+                {
+                    name: 'Shelly device with MAC only',
+                    data: { mac: 'EC62608A33A0', relays: [{}] },
+                    endpoint: '/status',
+                    expected: true
+                },
+                {
+                    name: 'Device with power monitoring',
+                    data: { apower: 100, voltage: 230, current: 0.5 },
+                    endpoint: '/status',
+                    expected: true
+                },
+                {
+                    name: 'Random Device',
+                    data: { info: 'some device' },
+                    endpoint: '/info',
+                    expected: false
+                }
+            ];
+            
+            testCases.forEach(testCase => {
+                const result = discovery.isShellyDevice(testCase.data, testCase.endpoint);
+                const status = result === testCase.expected ? '✅' : '❌';
+                const type = result === testCase.expected ? 'success' : 'error';
+                addResult('deviceTestResult', 
+                    `${status} ${testCase.name}: ${result ? 'Detected as Shelly' : 'Not detected as Shelly'}`, 
+                    type);
+            });
+        }
+        
+        async function startLiveTest() {
+            clearResults('liveTestResult');
+            document.getElementById('discoveredDevicesList').innerHTML = '';
+            
+            if (!discovery) {
+                discovery = new ShellyDiscovery();
+            }
+            
+            // Set up event handlers
+            discovery.onDeviceFound = (device) => {
+                addResult('liveTestResult', `🎯 Found device: ${device.displayName || device.ip}`, 'success');
+                updateDevicesList();
+            };
+            
+            discovery.onDiscoveryProgress = (progress) => {
+                addResult('liveTestResult', 
+                    `📡 Scanning ${progress.range}.${progress.current}/${progress.total} (Found: ${progress.found})`, 
+                    'info');
+            };
+            
+            discovery.onDiscoveryComplete = (devices) => {
+                addResult('liveTestResult', 
+                    `🏁 Discovery complete! Found ${devices.length} Shelly device(s)`, 
+                    devices.length > 0 ? 'success' : 'info');
+            };
+            
+            try {
+                addResult('liveTestResult', '🚀 Starting live discovery...', 'info');
+                await discovery.discoverDevices();
+            } catch (error) {
+                addResult('liveTestResult', `❌ Discovery error: ${error.message}`, 'error');
+            }
+        }
+        
+        function stopLiveTest() {
+            if (discovery && discovery.isScanning) {
+                discovery.stopDiscovery();
+                addResult('liveTestResult', '🛑 Discovery stopped by user', 'info');
+            }
+        }
+        
+        function updateDevicesList() {
+            if (!discovery) return;
+            
+            const devices = discovery.getDiscoveredDevices();
+            const container = document.getElementById('discoveredDevicesList');
+            
+            container.innerHTML = devices.map(device => `
+                <div class="device-item">
+                    <strong>${device.displayName || device.ip}</strong><br>
+                    <small>
+                        IP: ${device.ip} | 
+                        Type: ${device.deviceType || 'Unknown'} | 
+                        MAC: ${device.macAddress || 'Unknown'}
+                    </small>
+                </div>
+            `).join('');
+        }
+        
+        async function testSpecificIP() {
+            clearResults('specificIPResult');
+            
+            const ip = document.getElementById('testIP').value;
+            
+            if (!discovery) {
+                discovery = new ShellyDiscovery();
+            }
+            
+            addResult('specificIPResult', `🔍 Testing IP: ${ip} (server-side test to bypass CORS)`, 'info');
+            
+            try {
+                // Use server-side endpoint to bypass CORS
+                const response = await fetch('/test-ip', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ ip: ip })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    addResult('specificIPResult', `📊 Test completed for ${result.ip}`, 'success');
+                    
+                    // Process results for each endpoint
+                    for (const [endpoint, endpointResult] of Object.entries(result.results)) {
+                        if (endpointResult.success) {
+                            addResult('specificIPResult', 
+                                `✅ ${endpoint}: HTTP ${endpointResult.status}`, 
+                                'success');
+                            
+                            // Show key properties
+                            addResult('specificIPResult', 
+                                `📋 ${endpoint} keys: ${endpointResult.keys.join(', ')}`, 
+                                'info');
+                            
+                            // Show analysis
+                            const analysis = endpointResult.analysis;
+                            const indicators = [];
+                            if (analysis.hasType) indicators.push('type');
+                            if (analysis.hasDevice) indicators.push('device');
+                            if (analysis.hasMac) indicators.push('mac');
+                            if (analysis.hasRelays) indicators.push('relays');
+                            if (analysis.hasEmeters) indicators.push('emeters');
+                            if (analysis.hasMeters) indicators.push('meters');
+                            if (analysis.hasWifiSta) indicators.push('wifi_sta');
+                            if (analysis.hasCloud) indicators.push('cloud');
+                            if (analysis.hasMqtt) indicators.push('mqtt');
+                            if (analysis.hasFw) indicators.push('fw');
+                            if (analysis.hasApp) indicators.push('app');
+                            if (analysis.hasPower) indicators.push('power');
+                            if (analysis.hasVoltage) indicators.push('voltage');
+                            if (analysis.hasCurrent) indicators.push('current');
+                            
+                            addResult('specificIPResult', 
+                                `🔍 ${endpoint} indicators: ${indicators.join(', ') || 'none'}`, 
+                                indicators.length > 0 ? 'success' : 'info');
+                            
+                            // Test detection logic
+                            const isShelly = discovery.isShellyDevice(endpointResult.data, endpoint);
+                            addResult('specificIPResult', 
+                                `🎯 ${endpoint} detection: ${isShelly ? 'DETECTED as Shelly' : 'NOT detected as Shelly'}`, 
+                                isShelly ? 'success' : 'error');
+                            
+                            // Show sample of actual data
+                            const dataPreview = JSON.stringify(endpointResult.data, null, 2).substring(0, 300);
+                            addResult('specificIPResult', 
+                                `📄 ${endpoint} data sample: ${dataPreview}...`, 
+                                'info');
+                                
+                        } else {
+                            addResult('specificIPResult', 
+                                `❌ ${endpoint}: ${endpointResult.error}`, 
+                                'error');
+                        }
+                    }
+                } else {
+                    addResult('specificIPResult', `❌ Server test failed: ${response.status}`, 'error');
+                }
+                
+            } catch (error) {
+                addResult('specificIPResult', `❌ Test error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function quickPingTest() {
+            const ip = document.getElementById('testIP').value;
+            addResult('specificIPResult', `🏓 Quick ping test for ${ip}...`, 'info');
+            
+            try {
+                // Try a simple HEAD request to see if device responds
+                const response = await fetch(`http://${ip}`, {
+                    method: 'HEAD',
+                    signal: AbortSignal.timeout(3000),
+                    mode: 'no-cors'
+                });
+                
+                addResult('specificIPResult', `✅ Device at ${ip} is reachable`, 'success');
+            } catch (error) {
+                addResult('specificIPResult', `❌ Device at ${ip} not reachable: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testTargetedRange() {
+            clearResults('specificIPResult');
+            
+            if (!discovery) {
+                discovery = new ShellyDiscovery();
+            }
+            
+            addResult('specificIPResult', '🔍 Testing 192.168.1.x range (focused scan)...', 'info');
+            
+            // Set up event handlers for this targeted test
+            discovery.onDeviceFound = (device) => {
+                addResult('specificIPResult', `🎯 Found device: ${device.displayName || device.ip} (${device.mac})`, 'success');
+            };
+            
+            discovery.onDiscoveryProgress = (progress) => {
+                if (progress.current % 50 === 0 || progress.found > 0) { // Only log every 50 IPs or when devices found
+                    addResult('specificIPResult', 
+                        `📡 Scanned ${progress.current}/${progress.total} IPs in ${progress.range} (Found: ${progress.found})`, 
+                        'info');
+                }
+            };
+            
+            try {
+                // Clear any previous discoveries
+                discovery.clearDiscoveredDevices();
+                
+                // Manually scan just the 192.168.1.x range
+                await discovery.scanIPRange('192.168.1');
+                
+                const devices = discovery.getDiscoveredDevices();
+                addResult('specificIPResult', 
+                    `🏁 Targeted scan complete! Found ${devices.length} Shelly device(s) in 192.168.1.x`, 
+                    devices.length > 0 ? 'success' : 'info');
+                
+                // Show found devices
+                devices.forEach(device => {
+                    addResult('specificIPResult', 
+                        `📱 Device: ${device.ip} - ${device.displayName} (MAC: ${device.mac})`, 
+                        'success');
+                });
+                
+            } catch (error) {
+                addResult('specificIPResult', `❌ Targeted scan error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Auto-run basic tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testDiscoveryClass();
+            }, 100);
+        });
+    </script>
+</body>
+</html> 

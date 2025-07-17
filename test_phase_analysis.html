@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase Analysis Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #1a1a1a; color: white; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        .results { margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 3px; color: #333; }
+        .phase-indicator { padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: bold; margin: 2px; }
+        .phase-a { background: #f39c12; color: white; }
+        .phase-b { background: #ff6b6b; color: white; }
+        .phase-c { background: #4ecdc4; color: white; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Phase Analysis Test</h1>
+    
+    <div class="test-section">
+        <h3>Test 1: Create Sample Devices</h3>
+        <button onclick="createSampleDevices()">Create Sample Devices</button>
+        <div id="devicesResults" class="results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 2: Generate Phase Events</h3>
+        <button onclick="generatePhaseEvents()">Generate Events for All Phases</button>
+        <div id="eventsResults" class="results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 3: Test Phase Statistics</h3>
+        <button onclick="testPhaseStatistics()">Calculate Phase Statistics</button>
+        <div id="statsResults" class="results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 4: Open Consumption Analysis</h3>
+        <button onclick="openConsumptionAnalysis()">Open Enhanced Analysis Page</button>
+        <div id="linkResults" class="results">Click the button to open the enhanced consumption analysis page with phase analysis.</div>
+    </div>
+
+    <script src="config-manager.js"></script>
+    <script src="device-tracking.js"></script>
+    <script>
+        let deviceTracker;
+        let configManager;
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                configManager = new ConfigManager();
+                await configManager.initialize();
+                deviceTracker = new DeviceTracker();
+                log('Phase analysis test initialized successfully', 'success');
+            } catch (error) {
+                log('Error initializing: ' + error.message, 'error');
+            }
+        });
+
+        function log(message, type = 'info') {
+            console.log(message);
+        }
+
+        async function createSampleDevices() {
+            const resultsDiv = document.getElementById('devicesResults');
+            try {
+                const config = configManager.getConfig();
+                
+                // Clear existing devices
+                config.devices = [];
+                config.rooms = [
+                    { id: 'office', name: 'Office', createdAt: new Date().toISOString() },
+                    { id: 'kitchen', name: 'Kitchen', createdAt: new Date().toISOString() },
+                    { id: 'living', name: 'Living Room', createdAt: new Date().toISOString() }
+                ];
+
+                // Create devices for each phase
+                const sampleDevices = [
+                    // Phase A devices
+                    {
+                        id: 'computer_office',
+                        name: 'Office Computer',
+                        type: 'computer',
+                        roomId: 'office',
+                        phase: 'A',
+                        averagePower: 200,
+                        peakPower: 300,
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: 'lamp_office',
+                        name: 'Office Lamp',
+                        type: 'lampada da tavolo',
+                        roomId: 'office',
+                        phase: 'A',
+                        averagePower: 60,
+                        peakPower: 80,
+                        createdAt: new Date().toISOString()
+                    },
+                    // Phase B devices (none for your setup, but adding for testing)
+                    {
+                        id: 'printer_office',
+                        name: 'Office Printer',
+                        type: 'stampante',
+                        roomId: 'office',
+                        phase: 'B',
+                        averagePower: 150,
+                        peakPower: 200,
+                        createdAt: new Date().toISOString()
+                    },
+                    // Phase C devices
+                    {
+                        id: 'microwave_kitchen',
+                        name: 'Kitchen Microwave',
+                        type: 'forno microonde',
+                        roomId: 'kitchen',
+                        phase: 'C',
+                        averagePower: 1000,
+                        peakPower: 1200,
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: 'ac_living',
+                        name: 'Living Room AC',
+                        type: 'split',
+                        roomId: 'living',
+                        phase: 'C',
+                        averagePower: 1800,
+                        peakPower: 2200,
+                        createdAt: new Date().toISOString()
+                    }
+                ];
+
+                config.devices = sampleDevices;
+                await configManager.updateConfig(config);
+
+                resultsDiv.innerHTML = `
+                    <div class="success">✅ Created ${sampleDevices.length} sample devices</div>
+                    <p><strong>Phase A:</strong> <span class="phase-indicator phase-a">Computer</span> <span class="phase-indicator phase-a">Lamp</span></p>
+                    <p><strong>Phase B:</strong> <span class="phase-indicator phase-b">Printer</span></p>
+                    <p><strong>Phase C:</strong> <span class="phase-indicator phase-c">Microwave</span> <span class="phase-indicator phase-c">AC</span></p>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        function generatePhaseEvents() {
+            const resultsDiv = document.getElementById('eventsResults');
+            try {
+                if (!deviceTracker) {
+                    throw new Error('Device tracker not initialized');
+                }
+
+                const now = Date.now();
+                const devices = [
+                    { id: 'computer_office', phase: 'A', power: 200 },
+                    { id: 'lamp_office', phase: 'A', power: 60 },
+                    { id: 'printer_office', phase: 'B', power: 150 },
+                    { id: 'microwave_kitchen', phase: 'C', power: 1000 },
+                    { id: 'ac_living', phase: 'C', power: 1800 }
+                ];
+
+                let eventsGenerated = 0;
+
+                devices.forEach((device, index) => {
+                    // Generate 3-5 events per device over the last 24 hours
+                    const eventCount = 3 + Math.floor(Math.random() * 3);
+                    
+                    for (let i = 0; i < eventCount; i++) {
+                        const eventTime = now - Math.random() * 24 * 60 * 60 * 1000;
+                        const duration = (30 + Math.random() * 120) * 60 * 1000; // 30-150 minutes
+                        
+                        const turnOnEvent = {
+                            type: 'peak',
+                            phase: device.phase,
+                            powerDelta: device.power + (Math.random() - 0.5) * 50,
+                            timestamp: eventTime,
+                            readings: generateSampleReadings(device.phase, device.power),
+                            currentPower: device.power
+                        };
+                        
+                        const turnOffEvent = {
+                            type: 'valley',
+                            phase: device.phase,
+                            powerDelta: -(device.power + (Math.random() - 0.5) * 30),
+                            timestamp: eventTime + duration,
+                            readings: generateSampleReadings(device.phase, 0),
+                            currentPower: 0
+                        };
+                        
+                        deviceTracker.recordDeviceEvent(device.id, turnOnEvent, turnOffEvent, 'usage');
+                        eventsGenerated++;
+                    }
+                });
+
+                resultsDiv.innerHTML = `
+                    <div class="success">✅ Generated ${eventsGenerated} events across all phases</div>
+                    <p>Events distributed across:</p>
+                    <p><span class="phase-indicator phase-a">Phase A</span> Computer & Lamp events</p>
+                    <p><span class="phase-indicator phase-b">Phase B</span> Printer events</p>
+                    <p><span class="phase-indicator phase-c">Phase C</span> Microwave & AC events</p>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        function generateSampleReadings(phase, power) {
+            const readings = {
+                apower_a: 0,
+                apower_b: 0,
+                apower_c: 0,
+                voltage_a: 230,
+                voltage_b: 0,
+                voltage_c: 230,
+                current_a: 0,
+                current_b: 0,
+                current_c: 0,
+                pf_a: 0.85,
+                pf_b: 0.85,
+                pf_c: 0.85,
+                ts: Math.floor(Date.now() / 1000)
+            };
+            
+            readings[`apower_${phase.toLowerCase()}`] = power;
+            readings[`current_${phase.toLowerCase()}`] = power / 230;
+            
+            return readings;
+        }
+
+        function testPhaseStatistics() {
+            const resultsDiv = document.getElementById('statsResults');
+            try {
+                if (!deviceTracker) {
+                    throw new Error('Device tracker not initialized');
+                }
+
+                const analysis = deviceTracker.getConsumptionAnalysis('24h');
+                
+                // Calculate phase statistics
+                const phaseStats = {
+                    A: { consumption: 0, devices: 0, events: 0 },
+                    B: { consumption: 0, devices: 0, events: 0 },
+                    C: { consumption: 0, devices: 0, events: 0 }
+                };
+
+                Object.values(analysis.deviceStats).forEach(stats => {
+                    if (stats.device.phase && phaseStats[stats.device.phase]) {
+                        const phase = stats.device.phase;
+                        phaseStats[phase].consumption += stats.totalConsumption;
+                        phaseStats[phase].events += stats.eventCount;
+                        if (stats.eventCount > 0) {
+                            phaseStats[phase].devices++;
+                        }
+                    }
+                });
+
+                resultsDiv.innerHTML = `
+                    <div class="success">✅ Phase statistics calculated</div>
+                    <p><span class="phase-indicator phase-a">Phase A</span> ${phaseStats.A.consumption.toFixed(1)} Wh, ${phaseStats.A.devices} devices, ${phaseStats.A.events} events</p>
+                    <p><span class="phase-indicator phase-b">Phase B</span> ${phaseStats.B.consumption.toFixed(1)} Wh, ${phaseStats.B.devices} devices, ${phaseStats.B.events} events</p>
+                    <p><span class="phase-indicator phase-c">Phase C</span> ${phaseStats.C.consumption.toFixed(1)} Wh, ${phaseStats.C.devices} devices, ${phaseStats.C.events} events</p>
+                    <p><strong>Total:</strong> ${analysis.totalConsumption.toFixed(1)} Wh across ${analysis.totalEvents} events</p>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        function openConsumptionAnalysis() {
+            window.open('consumption_analysis.html', '_blank');
+        }
+    </script>
+</body>
+</html> 

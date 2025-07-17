@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  shelly-server:
+    build: .
+    container_name: shelly-data-capture
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    volumes:
+      # Persist data directory
+      - ./data:/app/data
+      # Optional: persist configuration
+      - ./shelly-environment-config.json:/app/shelly-environment-config.json
+      - ./shelly-tracking-data.json:/app/shelly-tracking-data.json
+    restart: unless-stopped
+    networks:
+      - shelly-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.shelly.rule=Host(`shelly.localhost`)"
+      - "traefik.http.routers.shelly.entrypoints=web"
+      - "traefik.http.services.shelly.loadbalancer.server.port=3000"
+
+networks:
+  shelly-network:
+    driver: bridge 

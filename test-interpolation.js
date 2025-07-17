@@ -1,0 +1,1 @@
+console.log('Testing interpolation...'); const testData = [{x: 1, y: 10}, {x: 2, y: 20}, {x: 3, y: 15}, {x: 4, y: 25}]; console.log('Original:', testData); console.log('Interpolated:', createExponentialSmoothing(testData, 0.3));

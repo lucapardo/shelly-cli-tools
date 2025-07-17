@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Auto-Update Events</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a2e;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: #28a745; }
+        .error { background: #dc3545; }
+        .info { background: #17a2b8; }
+        .warning { background: #ffc107; color: black; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover { background: #0056b3; }
+        .events-list {
+            background: #2d2d2d;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .event-item {
+            border-bottom: 1px solid #444;
+            padding: 10px 0;
+        }
+        .event-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Test Auto-Update Events</h1>
+        <p>Questa pagina verifica che gli eventi di consumo vengano aggiornati automaticamente nel file JSON.</p>
+        
+        <div class="controls">
+            <button onclick="checkEventsFile()">📄 Controlla File Eventi</button>
+            <button onclick="simulateEvent()">⚡ Simula Evento</button>
+            <button onclick="startMonitoring()">🔍 Avvia Monitoraggio</button>
+            <button onclick="stopMonitoring()">⏹️ Ferma Monitoraggio</button>
+        </div>
+        
+        <div id="status"></div>
+        <div id="eventsDisplay" class="events-list" style="display: none;"></div>
+    </div>
+
+    <script>
+        let monitoringInterval = null;
+        let lastEventCount = 0;
+
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        async function checkEventsFile() {
+            try {
+                showStatus('🔍 Caricamento file eventi...', 'info');
+                
+                const response = await fetch('consumption_events_for_browser.json?' + Date.now());
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const events = await response.json();
+                
+                showStatus(`✅ File caricato con successo! Trovati ${events.length} eventi.`, 'success');
+                displayEvents(events);
+                lastEventCount = events.length;
+                
+            } catch (error) {
+                showStatus(`❌ Errore nel caricamento del file: ${error.message}`, 'error');
+                console.error('Error loading events file:', error);
+            }
+        }
+
+        function displayEvents(events) {
+            const eventsDisplay = document.getElementById('eventsDisplay');
+            
+            if (events.length === 0) {
+                eventsDisplay.innerHTML = '<p>Nessun evento trovato nel file.</p>';
+                eventsDisplay.style.display = 'block';
+                return;
+            }
+
+            const eventsHtml = events.map((event, index) => `
+                <div class="event-item">
+                    <strong>Evento ${event.id}</strong> - Fase ${event.phase} - Tipo: ${event.type}<br>
+                    <small>
+                        Inizio: ${new Date(event.startTime).toLocaleString()}<br>
+                        Fine: ${new Date(event.endTime).toLocaleString()}<br>
+                        Durata: ${(event.duration / 1000 / 60).toFixed(1)} minuti<br>
+                        Energia: ${event.totalEnergy} Wh<br>
+                        Potenza: ${event.minPower}W - ${event.maxPower}W (avg: ${event.averagePower}W)
+                    </small>
+                </div>
+            `).join('');
+
+            eventsDisplay.innerHTML = eventsHtml;
+            eventsDisplay.style.display = 'block';
+        }
+
+        async function simulateEvent() {
+            try {
+                showStatus('⚡ Simulazione evento di consumo...', 'info');
+                
+                const simulatedEvent = {
+                    id: Date.now(),
+                    phase: 'A',
+                    type: 'MEDIUM',
+                    startTime: new Date(Date.now() - 300000).toISOString(), // 5 minuti fa
+                    endTime: new Date().toISOString(),
+                    duration: 300000, // 5 minuti
+                    minPower: '350.00',
+                    maxPower: '750.00',
+                    averagePower: '550.00',
+                    totalEnergy: '45.833' // 550W * 5min / 60 = 45.833 Wh
+                };
+
+                const response = await fetch('/api/save-consumption-event', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(simulatedEvent)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                showStatus(`✅ Evento simulato salvato! ID: ${simulatedEvent.id}. Totale eventi: ${result.totalEvents}`, 'success');
+                
+                // Ricarica gli eventi per mostrare l'aggiornamento
+                setTimeout(() => checkEventsFile(), 1000);
+                
+            } catch (error) {
+                showStatus(`❌ Errore nella simulazione: ${error.message}`, 'error');
+                console.error('Error simulating event:', error);
+            }
+        }
+
+        function startMonitoring() {
+            if (monitoringInterval) {
+                showStatus('⚠️ Monitoraggio già attivo!', 'warning');
+                return;
+            }
+
+            showStatus('🔍 Avvio monitoraggio automatico ogni 10 secondi...', 'info');
+            
+            // Controlla immediatamente
+            checkEventsFile();
+            
+            // Poi controlla ogni 10 secondi
+            monitoringInterval = setInterval(async () => {
+                try {
+                    const response = await fetch('consumption_events_for_browser.json?' + Date.now());
+                    if (response.ok) {
+                        const events = await response.json();
+                        
+                        if (events.length !== lastEventCount) {
+                            showStatus(`🔄 File aggiornato! Nuovi eventi: ${events.length - lastEventCount}. Totale: ${events.length}`, 'success');
+                            displayEvents(events);
+                            lastEventCount = events.length;
+                        } else {
+                            showStatus(`✅ Monitoraggio attivo - ${events.length} eventi (nessun cambiamento)`, 'info');
+                        }
+                    }
+                } catch (error) {
+                    showStatus(`❌ Errore nel monitoraggio: ${error.message}`, 'error');
+                }
+            }, 10000);
+        }
+
+        function stopMonitoring() {
+            if (monitoringInterval) {
+                clearInterval(monitoringInterval);
+                monitoringInterval = null;
+                showStatus('⏹️ Monitoraggio fermato.', 'info');
+            } else {
+                showStatus('⚠️ Nessun monitoraggio attivo.', 'warning');
+            }
+        }
+
+        // Carica automaticamente gli eventi all'avvio
+        document.addEventListener('DOMContentLoaded', () => {
+            checkEventsFile();
+        });
+
+        // Cleanup quando la pagina viene chiusa
+        window.addEventListener('beforeunload', () => {
+            if (monitoringInterval) {
+                clearInterval(monitoringInterval);
+            }
+        });
+    </script>
+</body>
+</html> 

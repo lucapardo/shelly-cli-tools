@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Threshold Lines Visibility</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a2e;
+            color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .controls {
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .control-group {
+            margin: 10px 0;
+        }
+        .control-group label {
+            display: inline-block;
+            width: 200px;
+            color: white;
+        }
+        .control-group input {
+            padding: 5px;
+            border: 1px solid #555;
+            border-radius: 5px;
+            background: #444;
+            color: white;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover { background: #0056b3; }
+        .chart-container {
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            height: 400px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: #28a745; }
+        .error { background: #dc3545; }
+        .info { background: #17a2b8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Test Threshold Lines Visibility</h1>
+        <p>Questa pagina testa la visualizzazione delle linee delle soglie sui grafici di potenza.</p>
+        
+        <div class="controls">
+            <h3>⚙️ Configurazione Soglie</h3>
+            <div class="control-group">
+                <label for="lowThreshold">Soglia Bassa (W):</label>
+                <input type="number" id="lowThreshold" value="300" min="1" max="10000">
+            </div>
+            <div class="control-group">
+                <label for="mediumThreshold">Soglia Media (W):</label>
+                <input type="number" id="mediumThreshold" value="1000" min="1" max="10000">
+            </div>
+            <div class="control-group">
+                <label for="enableThresholds">
+                    <input type="checkbox" id="enableThresholds" checked>
+                    Abilita Linee Soglie
+                </label>
+            </div>
+            <div class="control-group">
+                <button onclick="updateThresholds()">🔄 Aggiorna Soglie</button>
+                <button onclick="generateTestData()">📊 Genera Dati Test</button>
+                <button onclick="toggleThresholds()">👁️ Toggle Soglie</button>
+            </div>
+        </div>
+        
+        <div id="status"></div>
+        
+        <div class="chart-container">
+            <h3>⚡ Test Power Chart con Soglie</h3>
+            <canvas id="testPowerChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // Register the annotation plugin
+        Chart.register(ChartAnnotation);
+        
+        let testChart = null;
+        let powerThresholds = {
+            low: 300,
+            medium: 1000,
+            enabled: true
+        };
+
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function initializeChart() {
+            const ctx = document.getElementById('testPowerChart').getContext('2d');
+            
+            if (testChart) {
+                testChart.destroy();
+            }
+
+            testChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'Power (W)',
+                        data: [],
+                        borderColor: '#FFD700',
+                        backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#FFD700',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: 'white'
+                            }
+                        },
+                        annotation: {
+                            annotations: {}
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                displayFormats: {
+                                    minute: 'HH:mm',
+                                    hour: 'HH:mm'
+                                }
+                            },
+                            ticks: {
+                                color: 'white'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: 'white'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            showStatus('✅ Grafico inizializzato', 'success');
+        }
+
+        function generateTestData() {
+            if (!testChart) {
+                showStatus('❌ Grafico non inizializzato', 'error');
+                return;
+            }
+
+            const now = Date.now();
+            const data = [];
+            
+            // Genera dati di test che attraversano le soglie
+            for (let i = 0; i < 100; i++) {
+                const time = now - (100 - i) * 60000; // Ogni minuto negli ultimi 100 minuti
+                let power;
+                
+                if (i < 20) {
+                    power = 150 + Math.random() * 100; // Sotto soglia bassa
+                } else if (i < 40) {
+                    power = 350 + Math.random() * 200; // Tra bassa e media
+                } else if (i < 60) {
+                    power = 800 + Math.random() * 400; // Intorno alla soglia media
+                } else if (i < 80) {
+                    power = 1200 + Math.random() * 500; // Sopra soglia media
+                } else {
+                    power = 200 + Math.random() * 150; // Ritorno sotto soglia bassa
+                }
+                
+                data.push({
+                    x: time,
+                    y: power
+                });
+            }
+
+            testChart.data.datasets[0].data = data;
+            testChart.update();
+            
+            showStatus(`✅ Generati ${data.length} punti dati di test`, 'success');
+            
+            // Aggiorna le soglie dopo aver caricato i dati
+            if (powerThresholds.enabled) {
+                updateThresholdLines();
+            }
+        }
+
+        function updateThresholds() {
+            const lowThreshold = parseFloat(document.getElementById('lowThreshold').value) || 300;
+            const mediumThreshold = parseFloat(document.getElementById('mediumThreshold').value) || 1000;
+            
+            if (lowThreshold >= mediumThreshold) {
+                showStatus('❌ La soglia bassa deve essere minore di quella media', 'error');
+                return;
+            }
+            
+            powerThresholds.low = lowThreshold;
+            powerThresholds.medium = mediumThreshold;
+            
+            showStatus(`✅ Soglie aggiornate: Low=${lowThreshold}W, Medium=${mediumThreshold}W`, 'success');
+            
+            if (powerThresholds.enabled) {
+                updateThresholdLines();
+            }
+        }
+
+        function toggleThresholds() {
+            powerThresholds.enabled = document.getElementById('enableThresholds').checked;
+            
+            if (powerThresholds.enabled) {
+                updateThresholdLines();
+                showStatus('✅ Linee soglie abilitate', 'success');
+            } else {
+                removeThresholdLines();
+                showStatus('⚠️ Linee soglie disabilitate', 'info');
+            }
+        }
+
+        function updateThresholdLines() {
+            if (!testChart) {
+                showStatus('❌ Grafico non disponibile', 'error');
+                return;
+            }
+
+            console.log('Aggiornamento linee soglie...', powerThresholds);
+            
+            // Check if there's data that exceeds the medium threshold
+            let hasDataAboveMedium = false;
+            if (testChart.data && testChart.data.datasets && testChart.data.datasets.length > 0) {
+                const dataset = testChart.data.datasets[0];
+                if (dataset.data && dataset.data.length > 0) {
+                    hasDataAboveMedium = dataset.data.some(point => {
+                        const value = typeof point === 'object' ? point.y : point;
+                        return value > powerThresholds.medium;
+                    });
+                }
+            }
+            
+            console.log(`hasDataAboveMedium = ${hasDataAboveMedium}`);
+            
+            // Ensure plugins and annotation objects exist
+            if (!testChart.options.plugins) {
+                testChart.options.plugins = {};
+            }
+            if (!testChart.options.plugins.annotation) {
+                testChart.options.plugins.annotation = {};
+            }
+            if (!testChart.options.plugins.annotation.annotations) {
+                testChart.options.plugins.annotation.annotations = {};
+            }
+            
+            // Remove existing threshold annotations
+            Object.keys(testChart.options.plugins.annotation.annotations).forEach(key => {
+                if (key.startsWith('threshold_')) {
+                    delete testChart.options.plugins.annotation.annotations[key];
+                }
+            });
+            
+            // Always add LOW threshold line (green)
+            testChart.options.plugins.annotation.annotations.threshold_low = {
+                type: 'line',
+                yMin: powerThresholds.low,
+                yMax: powerThresholds.low,
+                borderColor: 'rgba(40, 167, 69, 0.8)',
+                borderWidth: 3,
+                borderDash: [5, 5],
+                label: {
+                    content: `Low: ${powerThresholds.low}W`,
+                    enabled: true,
+                    position: 'end',
+                    backgroundColor: 'rgba(40, 167, 69, 0.8)',
+                    color: 'white',
+                    font: {
+                        size: 12,
+                        weight: 'bold'
+                    }
+                }
+            };
+            
+            // Add MEDIUM threshold line (yellow) only if there's data above it
+            if (hasDataAboveMedium) {
+                testChart.options.plugins.annotation.annotations.threshold_medium = {
+                    type: 'line',
+                    yMin: powerThresholds.medium,
+                    yMax: powerThresholds.medium,
+                    borderColor: 'rgba(255, 193, 7, 0.8)',
+                    borderWidth: 3,
+                    borderDash: [5, 5],
+                    label: {
+                        content: `Medium: ${powerThresholds.medium}W`,
+                        enabled: true,
+                        position: 'end',
+                        backgroundColor: 'rgba(255, 193, 7, 0.8)',
+                        color: 'white',
+                        font: {
+                            size: 12,
+                            weight: 'bold'
+                        }
+                    }
+                };
+                console.log('Aggiunta linea MEDIUM (dati sopra soglia presenti)');
+                showStatus('✅ Linee soglie aggiunte: LOW e MEDIUM (dati sopra soglia)', 'success');
+            } else {
+                console.log('Linea MEDIUM nascosta (nessun dato sopra soglia)');
+                showStatus('✅ Linea soglia aggiunta: solo LOW (MEDIUM nascosta)', 'info');
+            }
+            
+            // HIGH threshold remains logic-only (no visual line)
+            // High consumption is anything above medium threshold
+            
+            console.log('Annotazioni finali:', Object.keys(testChart.options.plugins.annotation.annotations));
+            testChart.update();
+        }
+
+        function removeThresholdLines() {
+            if (!testChart) return;
+            
+            // Remove threshold annotations
+            if (testChart.options.plugins.annotation.annotations) {
+                Object.keys(testChart.options.plugins.annotation.annotations).forEach(key => {
+                    if (key.startsWith('threshold_')) {
+                        delete testChart.options.plugins.annotation.annotations[key];
+                    }
+                });
+            }
+            
+            testChart.update();
+            showStatus('⚠️ Linee soglie rimosse', 'info');
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeChart();
+            
+            // Add event listeners
+            document.getElementById('lowThreshold').addEventListener('change', updateThresholds);
+            document.getElementById('mediumThreshold').addEventListener('change', updateThresholds);
+            document.getElementById('enableThresholds').addEventListener('change', toggleThresholds);
+            
+            showStatus('🔄 Pagina inizializzata. Clicca "Genera Dati Test" per vedere le soglie.', 'info');
+        });
+    </script>
+</body>
+</html> 

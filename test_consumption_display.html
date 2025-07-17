@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Consumption Display</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a2e;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: #28a745; }
+        .error { background: #dc3545; }
+        .info { background: #17a2b8; }
+        .warning { background: #ffc107; color: black; }
+        .event-card {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+        .event-low { border-left-color: #28a745; }
+        .event-medium { border-left-color: #ffc107; }
+        .event-high { border-left-color: #dc3545; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .low { color: #28a745; }
+        .medium { color: #ffc107; }
+        .high { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Consumption Analysis Display</h1>
+        
+        <div class="status info">
+            <strong>Purpose:</strong> Test the consumption analysis logic with current data to verify LOW consumption events are being processed correctly.
+        </div>
+        
+        <button onclick="loadAndAnalyzeEvents()" style="padding: 10px 20px; margin: 10px 0; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            Load & Analyze Current Events
+        </button>
+        
+        <div id="results"></div>
+        
+        <h2>📊 Event Details</h2>
+        <div id="eventDetails"></div>
+        
+        <h2>📈 Statistics</h2>
+        <div id="statistics" class="stats"></div>
+    </div>
+
+    <script>
+        async function loadAndAnalyzeEvents() {
+            const results = document.getElementById('results');
+            const eventDetails = document.getElementById('eventDetails');
+            const statistics = document.getElementById('statistics');
+            
+            try {
+                results.innerHTML = '<div class="status info">Loading consumption events...</div>';
+                
+                // Fetch events from the server
+                const response = await fetch('consumption_events_for_browser.json');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const events = await response.json();
+                
+                if (!Array.isArray(events) || events.length === 0) {
+                    results.innerHTML = '<div class="status warning">No events found in the file</div>';
+                    return;
+                }
+                
+                // Analyze events
+                const analysis = analyzeEvents(events);
+                
+                // Display results
+                results.innerHTML = `<div class="status success">
+                    ✅ Successfully loaded ${events.length} events!<br>
+                    📊 LOW: ${analysis.stats.LOW.count} events (${analysis.stats.LOW.totalEnergy.toFixed(2)} Wh)<br>
+                    📊 MEDIUM: ${analysis.stats.MEDIUM.count} events (${analysis.stats.MEDIUM.totalEnergy.toFixed(2)} Wh)<br>
+                    📊 HIGH: ${analysis.stats.HIGH.count} events (${analysis.stats.HIGH.totalEnergy.toFixed(2)} Wh)
+                </div>`;
+                
+                // Display event details
+                eventDetails.innerHTML = events.map(event => `
+                    <div class="event-card event-${event.type.toLowerCase()}">
+                        <strong>Event ${event.id}</strong> - Phase ${event.phase} (${event.type})<br>
+                        Duration: ${(event.duration / 1000 / 60).toFixed(1)} minutes<br>
+                        Power: ${event.minPower}W - ${event.maxPower}W (avg: ${event.averagePower}W)<br>
+                        Energy: ${event.totalEnergy} Wh<br>
+                        <small>Start: ${new Date(event.startTime).toLocaleString()}</small>
+                    </div>
+                `).join('');
+                
+                // Display statistics
+                const totalEnergy = analysis.stats.LOW.totalEnergy + analysis.stats.MEDIUM.totalEnergy + analysis.stats.HIGH.totalEnergy;
+                
+                statistics.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-value low">${analysis.stats.LOW.count}</div>
+                        <div>LOW Events</div>
+                        <div>${(analysis.stats.LOW.totalEnergy / totalEnergy * 100).toFixed(1)}%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value medium">${analysis.stats.MEDIUM.count}</div>
+                        <div>MEDIUM Events</div>
+                        <div>${(analysis.stats.MEDIUM.totalEnergy / totalEnergy * 100).toFixed(1)}%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value high">${analysis.stats.HIGH.count}</div>
+                        <div>HIGH Events</div>
+                        <div>${(analysis.stats.HIGH.totalEnergy / totalEnergy * 100).toFixed(1)}%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${totalEnergy.toFixed(2)}</div>
+                        <div>Total Energy (Wh)</div>
+                        <div>100%</div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                results.innerHTML = `<div class="status error">
+                    ❌ Error loading events: ${error.message}
+                </div>`;
+                console.error('Error:', error);
+            }
+        }
+        
+        function analyzeEvents(events) {
+            const stats = {
+                LOW: { count: 0, totalEnergy: 0 },
+                MEDIUM: { count: 0, totalEnergy: 0 },
+                HIGH: { count: 0, totalEnergy: 0 }
+            };
+            
+            events.forEach(event => {
+                const energy = parseFloat(event.totalEnergy) || 0;
+                
+                if (stats[event.type]) {
+                    stats[event.type].count++;
+                    stats[event.type].totalEnergy += energy;
+                }
+            });
+            
+            return { stats };
+        }
+        
+        // Auto-load on page load
+        window.addEventListener('DOMContentLoaded', loadAndAnalyzeEvents);
+    </script>
+</body>
+</html> 

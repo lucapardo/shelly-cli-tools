@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test LOW Consumption Events</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a2e;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: #28a745; }
+        .error { background: #dc3545; }
+        .info { background: #17a2b8; }
+        .warning { background: #ffc107; color: black; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .test-data {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test LOW Consumption Events Detection</h1>
+        
+        <div class="status info">
+            <strong>Test Purpose:</strong> Verify that the updated event detection logic correctly captures LOW consumption events (10W - 300W range).
+        </div>
+        
+        <h2>📊 Test Scenarios</h2>
+        <button onclick="testLowConsumptionScenario()">Test LOW Consumption (150W)</button>
+        <button onclick="testMediumConsumptionScenario()">Test MEDIUM Consumption (500W)</button>
+        <button onclick="testMixedConsumptionScenario()">Test Mixed Consumption Pattern</button>
+        <button onclick="clearTestResults()">Clear Results</button>
+        
+        <div id="testResults"></div>
+        
+        <h2>📋 Current Event Detection Logic</h2>
+        <div class="test-data">
+            <strong>Event Start:</strong> power > 10W (minimum threshold to avoid noise)<br>
+            <strong>Event End:</strong> power ≤ 10W<br>
+            <strong>Event Classification:</strong><br>
+            • LOW: maxPower ≤ 300W<br>
+            • MEDIUM: 300W < maxPower ≤ 1000W<br>
+            • HIGH: maxPower > 1000W
+        </div>
+    </div>
+
+    <script>
+        // Copy the event detection logic from graphs.html
+        const powerThresholds = {
+            low: 300,
+            medium: 1000
+        };
+
+        const activeEvents = new Map();
+        let eventIdCounter = 0;
+        const testEvents = [];
+
+        function startConsumptionEvent(phase, power, timestamp) {
+            const eventKey = `phase_${phase}`;
+            const eventId = ++eventIdCounter;
+            
+            const newEvent = {
+                id: eventId,
+                phase: phase,
+                startTime: timestamp,
+                endTime: null,
+                minPower: power,
+                maxPower: power,
+                totalPower: power,
+                dataPoints: 1,
+                type: null,
+                isActive: true,
+                lastPower: power,
+                trend: 'rising'
+            };
+            
+            activeEvents.set(eventKey, newEvent);
+            console.log(`Started consumption event for Phase ${phase}:`, newEvent);
+            return newEvent;
+        }
+
+        function updateConsumptionEvent(eventKey, power, timestamp) {
+            const event = activeEvents.get(eventKey);
+            if (!event) return;
+            
+            event.minPower = Math.min(event.minPower, power);
+            event.maxPower = Math.max(event.maxPower, power);
+            event.totalPower += power;
+            event.dataPoints++;
+            
+            const powerDiff = power - event.lastPower;
+            if (Math.abs(powerDiff) > 5) {
+                event.trend = powerDiff > 0 ? 'rising' : 'falling';
+            }
+            event.lastPower = power;
+            
+            const shouldEnd = power <= 10;
+            
+            if (shouldEnd) {
+                endConsumptionEvent(eventKey, timestamp);
+            }
+        }
+
+        function endConsumptionEvent(eventKey, timestamp) {
+            const event = activeEvents.get(eventKey);
+            if (!event) return;
+            
+            event.endTime = timestamp;
+            event.isActive = false;
+            event.duration = event.endTime - event.startTime;
+            event.averagePower = event.totalPower / event.dataPoints;
+            
+            if (event.maxPower <= powerThresholds.low) {
+                event.type = 'LOW';
+            } else if (event.maxPower <= powerThresholds.medium) {
+                event.type = 'MEDIUM';
+            } else {
+                event.type = 'HIGH';
+            }
+            
+            testEvents.push({...event});
+            activeEvents.delete(eventKey);
+            
+            console.log(`Completed consumption event for Phase ${event.phase}:`, event);
+            return event;
+        }
+
+        function processPhaseEvent(phase, power, timestamp) {
+            const eventKey = `phase_${phase}`;
+            const activeEvent = activeEvents.get(eventKey);
+            
+            if (!activeEvent) {
+                if (power > 10) {
+                    startConsumptionEvent(phase, power, timestamp);
+                }
+            } else {
+                updateConsumptionEvent(eventKey, power, timestamp);
+            }
+        }
+
+        function testLowConsumptionScenario() {
+            const results = document.getElementById('testResults');
+            results.innerHTML += '<div class="status info"><strong>Testing LOW Consumption Scenario...</strong></div>';
+            
+            const phase = 'A';
+            const baseTime = Date.now();
+            
+            // Simulate LOW consumption pattern: 0W -> 150W -> 200W -> 150W -> 5W
+            const powerSequence = [
+                {power: 0, time: baseTime},
+                {power: 150, time: baseTime + 1000},
+                {power: 180, time: baseTime + 2000},
+                {power: 200, time: baseTime + 3000},
+                {power: 170, time: baseTime + 4000},
+                {power: 150, time: baseTime + 5000},
+                {power: 5, time: baseTime + 6000}
+            ];
+            
+            powerSequence.forEach(({power, time}) => {
+                processPhaseEvent(phase, power, time);
+            });
+            
+            // Check results
+            const lowEvents = testEvents.filter(e => e.type === 'LOW');
+            if (lowEvents.length > 0) {
+                const event = lowEvents[lowEvents.length - 1];
+                results.innerHTML += `<div class="status success">
+                    ✅ LOW event detected!<br>
+                    Phase: ${event.phase}, Duration: ${(event.duration/1000).toFixed(1)}s<br>
+                    Power range: ${event.minPower}W - ${event.maxPower}W (avg: ${event.averagePower.toFixed(1)}W)<br>
+                    Type: ${event.type}
+                </div>`;
+            } else {
+                results.innerHTML += '<div class="status error">❌ No LOW events detected</div>';
+            }
+        }
+
+        function testMediumConsumptionScenario() {
+            const results = document.getElementById('testResults');
+            results.innerHTML += '<div class="status info"><strong>Testing MEDIUM Consumption Scenario...</strong></div>';
+            
+            const phase = 'B';
+            const baseTime = Date.now();
+            
+            // Simulate MEDIUM consumption pattern: 0W -> 500W -> 600W -> 5W
+            const powerSequence = [
+                {power: 0, time: baseTime},
+                {power: 500, time: baseTime + 1000},
+                {power: 550, time: baseTime + 2000},
+                {power: 600, time: baseTime + 3000},
+                {power: 450, time: baseTime + 4000},
+                {power: 5, time: baseTime + 5000}
+            ];
+            
+            powerSequence.forEach(({power, time}) => {
+                processPhaseEvent(phase, power, time);
+            });
+            
+            // Check results
+            const mediumEvents = testEvents.filter(e => e.type === 'MEDIUM' && e.phase === 'B');
+            if (mediumEvents.length > 0) {
+                const event = mediumEvents[mediumEvents.length - 1];
+                results.innerHTML += `<div class="status success">
+                    ✅ MEDIUM event detected!<br>
+                    Phase: ${event.phase}, Duration: ${(event.duration/1000).toFixed(1)}s<br>
+                    Power range: ${event.minPower}W - ${event.maxPower}W (avg: ${event.averagePower.toFixed(1)}W)<br>
+                    Type: ${event.type}
+                </div>`;
+            } else {
+                results.innerHTML += '<div class="status error">❌ No MEDIUM events detected</div>';
+            }
+        }
+
+        function testMixedConsumptionScenario() {
+            const results = document.getElementById('testResults');
+            results.innerHTML += '<div class="status info"><strong>Testing Mixed Consumption Pattern...</strong></div>';
+            
+            const phase = 'C';
+            const baseTime = Date.now();
+            
+            // Simulate mixed pattern: LOW -> OFF -> LOW -> OFF
+            const powerSequence = [
+                {power: 0, time: baseTime},
+                {power: 200, time: baseTime + 1000},  // LOW event starts
+                {power: 250, time: baseTime + 2000},
+                {power: 5, time: baseTime + 3000},    // LOW event ends
+                {power: 0, time: baseTime + 4000},
+                {power: 180, time: baseTime + 5000},  // Another LOW event starts
+                {power: 220, time: baseTime + 6000},
+                {power: 8, time: baseTime + 7000}     // LOW event ends
+            ];
+            
+            powerSequence.forEach(({power, time}) => {
+                processPhaseEvent(phase, power, time);
+            });
+            
+            // Check results
+            const lowEvents = testEvents.filter(e => e.type === 'LOW' && e.phase === 'C');
+            results.innerHTML += `<div class="status success">
+                ✅ Mixed pattern test completed!<br>
+                LOW events detected: ${lowEvents.length}<br>
+                ${lowEvents.map(e => `Event ${e.id}: ${e.minPower}W-${e.maxPower}W (${(e.duration/1000).toFixed(1)}s)`).join('<br>')}
+            </div>`;
+        }
+
+        function clearTestResults() {
+            document.getElementById('testResults').innerHTML = '';
+            testEvents.length = 0;
+            activeEvents.clear();
+            eventIdCounter = 0;
+        }
+    </script>
+</body>
+</html> 

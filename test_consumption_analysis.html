@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Consumption Analysis</title>
+    <script src="config-manager.js"></script>
+    <script src="device-tracking.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .output {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Enhanced Consumption Analysis</h1>
+        <p>This page tests the enhanced device tracking with consumption patterns and event duration tracking.</p>
+        
+        <div>
+            <h3>Setup Test Environment</h3>
+            <button onclick="setupTestEnvironment()">🏠 Setup Test Devices</button>
+            <button onclick="generateSampleEvents()">📊 Generate Sample Events</button>
+            <button onclick="clearAllData()">🗑️ Clear All Data</button>
+        </div>
+        
+        <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #856404; margin-top: 0;">🚀 Prepare for Real Data</h3>
+            <button onclick="setupBasicRealDevices()" style="background: #007bff;">🏠 Quick Real Setup</button>
+            <button onclick="cleanTestDataForRealUse()" style="background: #28a745;">🧹 Clean for Real Use</button>
+            <button onclick="validateRealDataSetup()" style="background: #17a2b8;">✅ Validate Setup</button>
+            <button onclick="showRealDataStatus()" style="background: #6c757d;">📋 Show Status</button>
+        </div>
+        
+        <div>
+            <h3>Test Consumption Analysis</h3>
+            <button onclick="testConsumptionAnalysis()">📈 Run Analysis</button>
+            <button onclick="testPatternRecognition()">🔍 Test Pattern Recognition</button>
+            <button onclick="testEventDuration()">⏱️ Test Event Duration</button>
+        </div>
+        
+        <div>
+            <h3>View Results</h3>
+            <button onclick="showDeviceEvents()">📋 Show Device Events</button>
+            <button onclick="showConsumptionStats()">📊 Show Consumption Stats</button>
+            <button onclick="openConsumptionAnalysis()">🚀 Open Consumption Analysis Page</button>
+        </div>
+        
+        <div>
+            <h3>Navigation & Help</h3>
+            <button onclick="openMainDashboard()" style="background: #007bff;">📊 Open Dashboard</button>
+            <button onclick="openSettings()" style="background: #6c757d;">⚙️ Open Settings</button>
+            <button onclick="showTransitionGuide()" style="background: #17a2b8;">📖 Transition Guide</button>
+        </div>
+        
+        <div>
+            <h3>Debug & Diagnostics</h3>
+            <button onclick="debugLocalStorage()" style="background: #dc3545;">🔍 Debug localStorage</button>
+            <button onclick="checkAllConfigurations()" style="background: #ffc107; color: #000;">📋 Check All Configs</button>
+        </div>
+        
+        <div id="output" class="output"></div>
+    </div>
+
+    <script>
+        let deviceTracker;
+        
+        // Initialize device tracker
+        document.addEventListener('DOMContentLoaded', function() {
+            deviceTracker = new DeviceTracker();
+            log('Device tracker initialized');
+        });
+        
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : '';
+            output.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        function setupTestEnvironment() {
+            // Create test environment configuration
+            const testConfig = {
+                rooms: [
+                    { id: 'living_room', name: 'Living Room' },
+                    { id: 'kitchen', name: 'Kitchen' },
+                    { id: 'office', name: 'Office' }
+                ],
+                devices: [
+                    {
+                        id: 'computer_office',
+                        name: 'Office Computer',
+                        type: 'computer',
+                        roomId: 'office',
+                        phase: 'A',
+                        peakPower: 300,
+                        averagePower: 150
+                    },
+                    {
+                        id: 'microwave_kitchen',
+                        name: 'Microwave',
+                        type: 'forno microonde',
+                        roomId: 'kitchen',
+                        phase: 'B',
+                        peakPower: 1200,
+                        averagePower: 1000
+                    },
+                    {
+                        id: 'ac_living',
+                        name: 'Air Conditioner',
+                        type: 'split',
+                        roomId: 'living_room',
+                        phase: 'C',
+                        peakPower: 2000,
+                        averagePower: 1500
+                    },
+                    {
+                        id: 'lamp_office',
+                        name: 'Desk Lamp',
+                        type: 'lampada da tavolo',
+                        roomId: 'office',
+                        phase: 'A',
+                        peakPower: 60,
+                        averagePower: 50
+                    }
+                ]
+            };
+            
+            localStorage.setItem('shellyEnvironmentConfig', JSON.stringify(testConfig));
+            log('Test environment setup complete with 4 devices', 'success');
+        }
+        
+        async function setupBasicRealDevices() {
+            // Create a basic real device configuration based on your current power readings
+            // Phase A: ~270-285W, Phase C: ~480-540W, Phase B: 0W (not connected)
+            const realConfig = {
+                rooms: [
+                    { id: 'main_house', name: 'Main House', createdAt: new Date().toISOString() },
+                    { id: 'kitchen', name: 'Kitchen', createdAt: new Date().toISOString() },
+                    { id: 'living_area', name: 'Living Area', createdAt: new Date().toISOString() }
+                ],
+                devices: [
+                    {
+                        id: 'phase_a_load',
+                        name: 'Phase A Load (Computer/Electronics)',
+                        type: 'computer',
+                        roomId: 'main_house',
+                        phase: 'A',
+                        peakPower: 350,
+                        averagePower: 275,
+                        notes: 'Main computer and electronics on Phase A',
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: 'phase_c_load',
+                        name: 'Phase C Load (Appliances)',
+                        type: 'dispositivo generico',
+                        roomId: 'living_area',
+                        phase: 'C',
+                        peakPower: 600,
+                        averagePower: 510,
+                        notes: 'Main appliances and devices on Phase C',
+                        createdAt: new Date().toISOString()
+                    }
+                ],
+                deviceTypes: [
+                    'computer',
+                    'cucina a induzione',
+                    'dispositivo generico',
+                    'forno microonde',
+                    'lampada da tavolo',
+                    'luce a soffitto',
+                    'split',
+                    'stampante'
+                ]
+            };
+            
+            try {
+                // Try to use ConfigManager first
+                if (typeof ConfigManager !== 'undefined') {
+                    const configManager = new ConfigManager();
+                    await configManager.initialize();
+                    await configManager.updateConfig(realConfig);
+                    log('✅ Configuration saved to file successfully!', 'success');
+                } else {
+                    // Fallback to localStorage
+                    localStorage.setItem('shellyEnvironmentConfig', JSON.stringify(realConfig));
+                    log('✅ Configuration saved to localStorage (fallback)', 'success');
+                }
+                
+                log('Basic real device configuration created!', 'success');
+                log('✅ Phase A: Computer/Electronics (~275W average)', 'success');
+                log('✅ Phase C: Appliances (~510W average)', 'success');
+                log('✅ Phase B: Not connected (0W)', 'success');
+                log('', 'success');
+                log('You can now:', 'success');
+                log('1. Run "✅ Validate Setup" to confirm', 'success');
+                log('2. Go to Settings to customize device names and add more devices', 'success');
+                log('3. Start associating real power events with these devices', 'success');
+            } catch (error) {
+                log(`Error setting up configuration: ${error.message}`, 'error');
+                // Fallback to localStorage
+                localStorage.setItem('shellyEnvironmentConfig', JSON.stringify(realConfig));
+                log('Configuration saved to localStorage as fallback', 'success');
+            }
+        }
+        
+        function generateSampleEvents() {
+            if (!deviceTracker) {
+                log('Device tracker not initialized', 'error');
+                return;
+            }
+            
+            const now = Date.now();
+            const devices = ['computer_office', 'microwave_kitchen', 'ac_living', 'lamp_office'];
+            const phases = ['A', 'B', 'C', 'A'];
+            const powers = [300, 1200, 2000, 60];
+            
+            // Generate some sample events over the last 24 hours
+            for (let i = 0; i < 20; i++) {
+                const deviceIndex = Math.floor(Math.random() * devices.length);
+                const deviceId = devices[deviceIndex];
+                const phase = phases[deviceIndex];
+                const basePower = powers[deviceIndex];
+                
+                // Random time in the last 24 hours
+                const eventTime = now - Math.random() * 24 * 60 * 60 * 1000;
+                
+                // Create turn-on event
+                const turnOnEvent = {
+                    type: 'peak',
+                    phase: phase,
+                    powerDelta: basePower + (Math.random() - 0.5) * 100,
+                    timestamp: eventTime,
+                    readings: generateSampleReadings(phase, basePower),
+                    currentPower: basePower
+                };
+                
+                // Create turn-off event (30 minutes to 4 hours later)
+                const usageDuration = (30 + Math.random() * 210) * 60 * 1000; // 30 min to 4 hours
+                const turnOffEvent = {
+                    type: 'valley',
+                    phase: phase,
+                    powerDelta: -(basePower + (Math.random() - 0.5) * 50),
+                    timestamp: eventTime + usageDuration,
+                    readings: generateSampleReadings(phase, 0),
+                    currentPower: 0
+                };
+                
+                // Record the complete device event
+                deviceTracker.recordDeviceEvent(deviceId, turnOnEvent, turnOffEvent, 'usage');
+            }
+            
+            log(`Generated 20 sample device events with durations`, 'success');
+        }
+        
+        function generateSampleReadings(phase, power) {
+            const readings = {
+                apower_a: 0,
+                apower_b: 0,
+                apower_c: 0,
+                voltage_a: 230,
+                voltage_b: 0,
+                voltage_c: 230,
+                current_a: 0,
+                current_b: 0,
+                current_c: 0,
+                pf_a: 0.85,
+                pf_b: 0.85,
+                pf_c: 0.85,
+                ts: Math.floor(Date.now() / 1000)
+            };
+            
+            // Set power for the specific phase
+            readings[`apower_${phase.toLowerCase()}`] = power;
+            readings[`current_${phase.toLowerCase()}`] = power / 230;
+            
+            return readings;
+        }
+        
+        function testConsumptionAnalysis() {
+            if (!deviceTracker) {
+                log('Device tracker not initialized', 'error');
+                return;
+            }
+            
+            const analysis = deviceTracker.getConsumptionAnalysis('24h');
+            log('Consumption Analysis Results:', 'success');
+            log(`Total Events: ${analysis.totalEvents}`);
+            log(`Total Consumption: ${analysis.totalConsumption.toFixed(2)} Wh`);
+            log(`Active Devices: ${Object.values(analysis.deviceStats).filter(s => s.eventCount > 0).length}`);
+            
+            // Show device breakdown
+            Object.values(analysis.deviceStats).forEach(stats => {
+                if (stats.eventCount > 0) {
+                    log(`${stats.device.name}: ${stats.eventCount} events, ${stats.totalConsumption.toFixed(2)} Wh, avg ${(stats.averageDuration / (1000 * 60)).toFixed(1)} min`);
+                }
+            });
+        }
+        
+        function testPatternRecognition() {
+            if (!deviceTracker) {
+                log('Device tracker not initialized', 'error');
+                return;
+            }
+            
+            // Test pattern recognition with different event types
+            const testEvents = [
+                {
+                    type: 'peak',
+                    phase: 'A',
+                    powerDelta: 300,
+                    timestamp: Date.now(),
+                    currentPower: 300,
+                    readings: generateSampleReadings('A', 300)
+                },
+                {
+                    type: 'valley',
+                    phase: 'B',
+                    powerDelta: -1200,
+                    timestamp: Date.now(),
+                    currentPower: 0,
+                    readings: generateSampleReadings('B', 0)
+                },
+                {
+                    type: 'peak',
+                    phase: 'C',
+                    powerDelta: 15,
+                    timestamp: Date.now(),
+                    currentPower: 1500,
+                    readings: generateSampleReadings('C', 1500)
+                }
+            ];
+            
+            log('Pattern Recognition Test Results:', 'success');
+            testEvents.forEach((event, i) => {
+                const suggestions = deviceTracker.analyzeEvent(event);
+                log(`Event ${i + 1} (${event.type}, ${event.powerDelta}W): ${suggestions.length} suggestions`);
+                suggestions.forEach(suggestion => {
+                    log(`  - ${suggestion.device.name}: ${(suggestion.confidence * 100).toFixed(0)}% (${suggestion.algorithm})`);
+                });
+            });
+        }
+        
+        function testEventDuration() {
+            if (!deviceTracker) {
+                log('Device tracker not initialized', 'error');
+                return;
+            }
+            
+            const now = Date.now();
+            const startEvent = {
+                type: 'peak',
+                phase: 'A',
+                powerDelta: 150,
+                timestamp: now - 3600000, // 1 hour ago
+                readings: generateSampleReadings('A', 150)
+            };
+            
+            const endEvent = {
+                type: 'valley',
+                phase: 'A',
+                powerDelta: -150,
+                timestamp: now,
+                readings: generateSampleReadings('A', 0)
+            };
+            
+            const deviceEvent = deviceTracker.recordDeviceEvent('computer_office', startEvent, endEvent, 'usage');
+            
+            log('Event Duration Test:', 'success');
+            log(`Duration: ${(deviceEvent.duration / (1000 * 60)).toFixed(1)} minutes`);
+            log(`Total Consumption: ${deviceEvent.totalConsumption.toFixed(2)} Wh`);
+            log(`Average Power: ${deviceEvent.averagePower.toFixed(1)} W`);
+            log(`Stabilization Detected: ${deviceEvent.patternAnalysis.stabilizationDetected}`);
+        }
+        
+        function showDeviceEvents() {
+            if (!deviceTracker) {
+                log('Device tracker not initialized', 'error');
+                return;
+            }
+            
+            const events = deviceTracker.deviceEvents || [];
+            log(`Device Events (${events.length} total):`, 'success');
+            
+            events.slice(-10).forEach((event, i) => {
+                const duration = event.duration ? `${(event.duration / (1000 * 60)).toFixed(1)} min` : 'ongoing';
+                const consumption = event.totalConsumption ? `${event.totalConsumption.toFixed(2)} Wh` : '0 Wh';
+                log(`${i + 1}. ${event.deviceId} - ${duration} - ${consumption}`);
+            });
+        }
+        
+        function showConsumptionStats() {
+            if (!deviceTracker) {
+                log('Device tracker not initialized', 'error');
+                return;
+            }
+            
+            const stats = deviceTracker.getTrackingStats();
+            log('Tracking Statistics:', 'success');
+            log(`Total Associations: ${stats.totalAssociations}`);
+            log(`Manual: ${stats.manualAssociations}, Auto: ${stats.autoAssociations}`);
+            log(`Phase Distribution: A=${stats.phaseBreakdown.A}, B=${stats.phaseBreakdown.B}, C=${stats.phaseBreakdown.C}`);
+            log(`Event Types: Peaks=${stats.typeBreakdown.peak}, Valleys=${stats.typeBreakdown.valley}`);
+        }
+        
+        function clearAllData() {
+            if (!deviceTracker) {
+                log('Device tracker not initialized', 'error');
+                return;
+            }
+            
+            deviceTracker.clearTrackingData();
+            log('All tracking data cleared', 'success');
+        }
+        
+        function cleanTestDataForRealUse() {
+            if (!deviceTracker) {
+                log('Device tracker not initialized', 'error');
+                return;
+            }
+            
+            // Clear all tracking data but keep environment configuration
+            deviceTracker.clearTrackingData();
+            
+            // Also clear any test environment configuration if it exists
+            const config = deviceTracker.getEnvironmentConfig();
+            if (config && config.devices) {
+                const testDeviceIds = ['computer_office', 'microwave_kitchen', 'ac_living', 'lamp_office'];
+                const hasTestDevices = config.devices.some(device => testDeviceIds.includes(device.id));
+                
+                if (hasTestDevices) {
+                    log('Test environment configuration detected. Please reconfigure your real devices in the Environment Setup.', 'error');
+                    log('Go to Settings > Environment Setup to configure your actual devices.', 'error');
+                    
+                    // Optionally clear the test configuration
+                    if (confirm('Do you want to clear the test environment configuration? You will need to set up your real devices again.')) {
+                        localStorage.removeItem('shellyEnvironmentConfig');
+                        log('Test environment configuration cleared. Please set up your real devices.', 'success');
+                    }
+                }
+            }
+            
+            log('System cleaned and ready for real data collection!', 'success');
+            log('Next steps:', 'success');
+            log('1. Go to Settings (⚙️ Environment Setup) to configure your real devices', 'success');
+            log('2. Start data collection from your Shelly 3EM device', 'success');
+            log('3. Associate real power events with your configured devices', 'success');
+        }
+        
+        function validateRealDataSetup() {
+            // First check if deviceTracker is initialized
+            if (!deviceTracker) {
+                log('Device tracker not initialized', 'error');
+                return false;
+            }
+            
+            // Check localStorage directly as well
+            const configString = localStorage.getItem('shellyEnvironmentConfig');
+            log(`Raw config from localStorage: ${configString ? 'Found' : 'Not found'}`, configString ? 'success' : 'error');
+            
+            if (configString) {
+                try {
+                    const rawConfig = JSON.parse(configString);
+                    log(`Raw config devices count: ${rawConfig.devices ? rawConfig.devices.length : 0}`);
+                } catch (e) {
+                    log(`Error parsing config: ${e.message}`, 'error');
+                }
+            }
+            
+            // Get config through deviceTracker
+            const config = deviceTracker.getEnvironmentConfig();
+            log(`Config from deviceTracker: ${config ? 'Found' : 'Not found'}`, config ? 'success' : 'error');
+            
+            if (!config || !config.devices || config.devices.length === 0) {
+                log('No devices configured. Please set up your environment first.', 'error');
+                log('Go to Settings > Environment Setup to configure your devices', 'error');
+                return false;
+            }
+            
+            const testDeviceIds = ['computer_office', 'microwave_kitchen', 'ac_living', 'lamp_office'];
+            const hasTestDevices = config.devices.some(device => testDeviceIds.includes(device.id));
+            
+            if (hasTestDevices) {
+                log('Test devices detected in configuration. Please clean test data first.', 'error');
+                return false;
+            }
+            
+            log('Real device configuration validated:', 'success');
+            config.devices.forEach(device => {
+                log(`- ${device.name} (${device.type}) on Phase ${device.phase}`, 'success');
+            });
+            
+            return true;
+        }
+        
+        function showRealDataStatus() {
+            log('=== REAL DATA STATUS ===', 'success');
+            
+            // Check environment configuration
+            const config = deviceTracker.getEnvironmentConfig();
+            if (!config || !config.devices || config.devices.length === 0) {
+                log('❌ No devices configured', 'error');
+                log('   → Go to Settings to configure your real devices', 'error');
+            } else {
+                const testDeviceIds = ['computer_office', 'microwave_kitchen', 'ac_living', 'lamp_office'];
+                const hasTestDevices = config.devices.some(device => testDeviceIds.includes(device.id));
+                
+                if (hasTestDevices) {
+                    log('⚠️  Test devices detected in configuration', 'error');
+                    log('   → Click "Clean for Real Use" to remove test data', 'error');
+                } else {
+                    log(`✅ Real devices configured: ${config.devices.length} devices`, 'success');
+                    config.devices.forEach(device => {
+                        log(`   - ${device.name} (${device.type}) on Phase ${device.phase}`);
+                    });
+                }
+            }
+            
+            // Check tracking data
+            const events = deviceTracker.deviceEvents || [];
+            const associations = deviceTracker.getAssociations() || [];
+            
+            log(`📊 Current tracking data:`, 'success');
+            log(`   - Device events: ${events.length}`);
+            log(`   - Event associations: ${associations.length}`);
+            
+            if (events.length > 0) {
+                const recentEvent = events[events.length - 1];
+                const eventTime = new Date(recentEvent.startTime).toLocaleString();
+                log(`   - Last event: ${recentEvent.deviceId} at ${eventTime}`);
+            }
+            
+            // Check if data collection is running
+            log('📡 Data collection status: Check main dashboard for current status');
+        }
+        
+        function openConsumptionAnalysis() {
+            window.open('consumption_analysis.html', '_blank');
+        }
+        
+        function openMainDashboard() {
+            window.open('graphs.html', '_blank');
+        }
+        
+        function openSettings() {
+            window.open('settings.html', '_blank');
+        }
+        
+        function showTransitionGuide() {
+            log('=== TRANSITION TO REAL DATA GUIDE ===', 'success');
+            log('');
+            log('📋 Step-by-step guide to use real data:', 'success');
+            log('');
+            log('1️⃣ CLEAN TEST DATA:', 'success');
+            log('   → Click "🧹 Clean for Real Use" button above');
+            log('   → This removes all test events and optionally test device configuration');
+            log('');
+            log('2️⃣ CONFIGURE REAL DEVICES:', 'success');
+            log('   → Click "⚙️ Open Settings" to configure your actual devices');
+            log('   → Add your real devices with correct phases (A, B, C)');
+            log('   → Set realistic power consumption values for each device');
+            log('');
+            log('3️⃣ START DATA COLLECTION:', 'success');
+            log('   → Click "📊 Open Dashboard" to go to the main interface');
+            log('   → Enter your Shelly 3EM IP address (currently: 192.168.1.51)');
+            log('   → Click "Start Data Collection" to begin monitoring');
+            log('');
+            log('4️⃣ ASSOCIATE REAL EVENTS:', 'success');
+            log('   → Watch for power peaks/valleys on the charts');
+            log('   → Double-click on significant events to associate them with devices');
+            log('   → The system will learn your device patterns over time');
+            log('');
+            log('5️⃣ MONITOR CONSUMPTION:', 'success');
+            log('   → Use "⚡ Consumption Analysis" to view usage statistics');
+            log('   → Track energy consumption by device and time period');
+            log('   → Export data for further analysis');
+            log('');
+            log('💡 Tips for better accuracy:', 'success');
+            log('   → Associate both turn-on (peaks) and turn-off (valleys) events');
+            log('   → The system automatically calculates usage duration and consumption');
+            log('   → More associations = better automatic device recognition');
+        }
+        
+        function debugLocalStorage() {
+            log('=== LOCALSTORAGE DEBUG ===', 'success');
+            
+            // Check all relevant localStorage keys
+            const keys = [
+                'shellyEnvironmentConfig',
+                'deviceAssociations',
+                'learningData',
+                'eventHistory',
+                'deviceEvents',
+                'consumptionPatterns'
+            ];
+            
+            keys.forEach(key => {
+                const value = localStorage.getItem(key);
+                if (value) {
+                    try {
+                        const parsed = JSON.parse(value);
+                        if (key === 'shellyEnvironmentConfig') {
+                            log(`✅ ${key}: Found with ${parsed.devices ? parsed.devices.length : 0} devices, ${parsed.rooms ? parsed.rooms.length : 0} rooms`, 'success');
+                            if (parsed.devices && parsed.devices.length > 0) {
+                                parsed.devices.forEach(device => {
+                                    log(`   - ${device.name} (${device.type}) on Phase ${device.phase}`);
+                                });
+                            }
+                        } else if (Array.isArray(parsed)) {
+                            log(`✅ ${key}: Found with ${parsed.length} items`, 'success');
+                        } else if (typeof parsed === 'object') {
+                            log(`✅ ${key}: Found (object)`, 'success');
+                        } else {
+                            log(`✅ ${key}: Found`, 'success');
+                        }
+                    } catch (e) {
+                        log(`❌ ${key}: Invalid JSON - ${e.message}`, 'error');
+                    }
+                } else {
+                    log(`❌ ${key}: Not found`, 'error');
+                }
+            });
+        }
+        
+        function checkAllConfigurations() {
+            log('=== CONFIGURATION CHECK ===', 'success');
+            
+            // Check deviceTracker initialization
+            if (!deviceTracker) {
+                log('❌ DeviceTracker not initialized', 'error');
+                return;
+            }
+            
+            log('✅ DeviceTracker initialized', 'success');
+            
+            // Check environment config
+            const config = deviceTracker.getEnvironmentConfig();
+            if (config) {
+                log(`✅ Environment config loaded:`, 'success');
+                log(`   - Rooms: ${config.rooms ? config.rooms.length : 0}`);
+                log(`   - Devices: ${config.devices ? config.devices.length : 0}`);
+                log(`   - Device Types: ${config.deviceTypes ? config.deviceTypes.length : 0}`);
+                
+                if (config.devices && config.devices.length > 0) {
+                    log('📋 Configured devices:');
+                    config.devices.forEach(device => {
+                        log(`   - ${device.name} (${device.type}) on Phase ${device.phase} - Peak: ${device.peakPower}W, Avg: ${device.averagePower}W`);
+                    });
+                }
+                
+                if (config.rooms && config.rooms.length > 0) {
+                    log('🏠 Configured rooms:');
+                    config.rooms.forEach(room => {
+                        log(`   - ${room.name} (ID: ${room.id})`);
+                    });
+                }
+            } else {
+                log('❌ No environment config found', 'error');
+            }
+            
+            // Check tracking data
+            const events = deviceTracker.deviceEvents || [];
+            const associations = deviceTracker.getAssociations() || [];
+            
+            log(`📊 Tracking data:`, 'success');
+            log(`   - Device events: ${events.length}`);
+            log(`   - Associations: ${associations.length}`);
+            
+            // Check for test data
+            if (config && config.devices) {
+                const testDeviceIds = ['computer_office', 'microwave_kitchen', 'ac_living', 'lamp_office'];
+                const hasTestDevices = config.devices.some(device => testDeviceIds.includes(device.id));
+                
+                if (hasTestDevices) {
+                    log('⚠️  Test devices detected in configuration', 'error');
+                    log('   → Use "Clean for Real Use" to remove test data');
+                } else {
+                    log('✅ No test devices detected', 'success');
+                }
+            }
+        }
+    </script>
+</body>
+</html> 
