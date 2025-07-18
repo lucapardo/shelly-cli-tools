@@ -277,6 +277,18 @@
             font-weight: normal;
             margin-left: 5px;
         }
+        .form-group input[type="color"] {
+            width: 40px;
+            height: 40px;
+            border: none;
+            padding: 0;
+            background: none;
+            cursor: pointer;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            display: inline-block;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
@@ -420,6 +432,11 @@
                     <textarea id="deviceNotes" rows="3" placeholder="Additional notes about this device"></textarea>
                 </div>
                 
+                <div class="form-group">
+                    <label for="deviceColor">Device Color:</label>
+                    <input type="color" id="deviceColor" value="#cccccc">
+                </div>
+                
                 <button type="submit" class="btn">Save Device</button>
                 <button type="button" class="btn btn-secondary" onclick="closeDeviceModal()">Cancel</button>
             </form>
@@ -489,7 +506,7 @@
             await initializeConfigManager();
             await loadConfig();
             await updateUI();
-            updateTrackingStats();
+            await updateTrackingStats();
         });
 
         // Initialize configuration manager
@@ -722,6 +739,7 @@
             document.getElementById('peakPower').value = device.peakPower;
             document.getElementById('averagePower').value = device.averagePower;
             document.getElementById('deviceNotes').value = device.notes || '';
+            document.getElementById('deviceColor').value = device.color || '#cccccc';
             
             document.getElementById('deviceModal').style.display = 'block';
         }
@@ -744,6 +762,7 @@
             document.getElementById('peakPower').value = device.peakPower;
             document.getElementById('averagePower').value = device.averagePower;
             document.getElementById('deviceNotes').value = device.notes || '';
+            document.getElementById('deviceColor').value = device.color || '#cccccc';
             
             document.getElementById('deviceModal').style.display = 'block';
         }
@@ -837,7 +856,8 @@
                 phase: document.getElementById('devicePhase').value,
                 peakPower: parseFloat(document.getElementById('peakPower').value),
                 averagePower: parseFloat(document.getElementById('averagePower').value),
-                notes: document.getElementById('deviceNotes').value.trim()
+                notes: document.getElementById('deviceNotes').value.trim(),
+                color: document.getElementById('deviceColor').value || '#cccccc'
             };
             
             if (editingDeviceId) {
@@ -1145,7 +1165,7 @@
         }
         
         // Device tracking functions
-        function updateTrackingStats() {
+        async function updateTrackingStats() {
             const trackingStatsDiv = document.getElementById('trackingStats');
             
             // Load device tracker if not already loaded
@@ -1155,9 +1175,41 @@
             }
             
             try {
-                // Create a temporary tracker to get stats
+                // Create a temporary tracker and wait for it to initialize with actual data
                 const tempTracker = new DeviceTracker();
-                const stats = tempTracker.getTrackingStats();
+                
+                // Wait for tracker to initialize and load data
+                await waitForTrackerInitialization(tempTracker);
+                
+                // Get tracking data directly from the tracker
+                const deviceAssociations = tempTracker.deviceAssociations || [];
+                const deviceEvents = tempTracker.deviceEvents || [];
+                
+                // Calculate statistics manually from the actual data
+                const stats = {
+                    totalAssociations: deviceAssociations.length,
+                    manualAssociations: deviceAssociations.filter(a => a.source === 'manual').length,
+                    autoAssociations: deviceAssociations.filter(a => a.source === 'auto').length,
+                    phaseBreakdown: {
+                        A: deviceAssociations.filter(a => a.phase === 'A').length,
+                        B: deviceAssociations.filter(a => a.phase === 'B').length,
+                        C: deviceAssociations.filter(a => a.phase === 'C').length
+                    },
+                    typeBreakdown: {
+                        peak: deviceAssociations.filter(a => a.type === 'peak').length,
+                        valley: deviceAssociations.filter(a => a.type === 'valley').length
+                    },
+                    deviceBreakdown: {}
+                };
+                
+                // Calculate device breakdown
+                deviceAssociations.forEach(association => {
+                    const deviceId = association.deviceId;
+                    if (!stats.deviceBreakdown[deviceId]) {
+                        stats.deviceBreakdown[deviceId] = 0;
+                    }
+                    stats.deviceBreakdown[deviceId]++;
+                });
                 
                 let deviceBreakdownHtml = '';
                 if (Object.keys(stats.deviceBreakdown).length > 0) {
@@ -1168,6 +1220,13 @@
                         deviceBreakdownHtml += `<li>${deviceName}: ${count} events</li>`;
                     });
                     deviceBreakdownHtml += '</ul>';
+                }
+                
+                // Add device events statistics
+                let deviceEventsHtml = '';
+                if (deviceEvents.length > 0) {
+                    const completeEvents = deviceEvents.filter(e => e.startTime && e.endTime);
+                    deviceEventsHtml = `<h5>Complete Device Events:</h5><p>Total: ${completeEvents.length} events with duration</p>`;
                 }
                 
                 trackingStatsDiv.innerHTML = `
@@ -1194,9 +1253,31 @@
                         </div>
                     </div>
                     ${deviceBreakdownHtml}
+                    ${deviceEventsHtml}
                 `;
             } catch (error) {
-                trackingStatsDiv.innerHTML = '<p style="color: #666; font-style: italic;">Error loading tracking statistics.</p>';
+                console.error('Error loading tracking statistics:', error);
+                trackingStatsDiv.innerHTML = '<p style="color: #666; font-style: italic;">Error loading tracking statistics. Please try refreshing the page.</p>';
+            }
+        }
+        
+        // Helper function to wait for tracker initialization
+        async function waitForTrackerInitialization(tracker) {
+            let attempts = 0;
+            const maxAttempts = 50; // 5 seconds max wait time
+            
+            while (attempts < maxAttempts) {
+                if (tracker.configManager !== null && tracker.deviceAssociations !== null) {
+                    // Give it a bit more time to fully load
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    break;
+                }
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
+            if (attempts >= maxAttempts) {
+                console.warn('Tracker initialization timeout');
             }
         }
         
@@ -1240,13 +1321,13 @@
             }
             
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
                 try {
                     const tracker = new DeviceTracker();
                     const success = tracker.importTrackingData(e.target.result);
                     
                     if (success) {
-                        updateTrackingStats();
+                        await updateTrackingStats();
                         showStatus('Tracking data imported successfully', 'success');
                     } else {
                         showStatus('Error importing tracking data', 'error');

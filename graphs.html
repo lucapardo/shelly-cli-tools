@@ -2182,6 +2182,95 @@
             }
         }
 
+        // Add device event fills to power charts
+        function addDeviceEventFills(chartId, data) {
+            if (!deviceTracker || !charts[chartId]) return;
+            
+            // Only add fills to power charts
+            if (!chartId.includes('power')) return;
+            
+            const chart = charts[chartId];
+            const phase = getPhaseFromChartId(chartId);
+            
+            // Get device events from tracker
+            const deviceEvents = deviceTracker.deviceEvents || [];
+            const config = deviceTracker.getEnvironmentConfig();
+            
+            if (!config || !config.devices) return;
+            
+            // Filter events for this phase and with valid duration
+            const phaseEvents = deviceEvents.filter(event => 
+                event.phase === phase && 
+                event.startTime && 
+                event.endTime && 
+                event.duration > 0
+            );
+            
+            // Get current time range of chart data
+            if (data.length === 0) return;
+            const dataStartTime = data[0].x;
+            const dataEndTime = data[data.length - 1].x;
+            
+            // Remove any existing device fill datasets
+            chart.data.datasets = chart.data.datasets.filter(dataset => 
+                !dataset.label || !dataset.label.startsWith('Device Fill:')
+            );
+            
+            // Add fill datasets for each device event
+            phaseEvents.forEach((event, index) => {
+                // Check if event overlaps with current data range
+                if (event.endTime < dataStartTime || event.startTime > dataEndTime) return;
+                
+                // Get device info
+                const device = config.devices.find(d => d.id === event.deviceId);
+                if (!device) return;
+                
+                // Use device color or default to light grey
+                const deviceColor = device.color || '#cccccc';
+                
+                // Convert hex color to rgba with 15% opacity
+                const fillColor = hexToRgba(deviceColor, 0.15);
+                
+                // Get data points that fall within this event period
+                const eventDataPoints = data.filter(point => 
+                    point.x >= event.startTime && point.x <= event.endTime
+                ).sort((a, b) => a.x - b.x);
+                
+                if (eventDataPoints.length === 0) return;
+                
+                // Create a dataset that follows the curve for this event
+                const fillDataset = {
+                    label: `Device Fill: ${device.name}`,
+                    data: eventDataPoints,
+                    borderColor: 'transparent',
+                    backgroundColor: fillColor,
+                    borderWidth: 0,
+                    fill: 'origin', // Fill to the x-axis (bottom)
+                    pointRadius: 0,
+                    pointHoverRadius: 0,
+                    tension: 0.4,
+                    order: 100 + index, // Ensure it's drawn behind the main datasets
+                    hidden: false
+                };
+                
+                // Add the fill dataset to the chart
+                chart.data.datasets.push(fillDataset);
+            });
+        }
+        
+        // Helper function to convert hex color to rgba
+        function hexToRgba(hex, alpha) {
+            // Remove # if present
+            hex = hex.replace('#', '');
+            
+            // Parse hex color
+            const r = parseInt(hex.substr(0, 2), 16);
+            const g = parseInt(hex.substr(2, 2), 16);
+            const b = parseInt(hex.substr(4, 2), 16);
+            
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
         // Add device annotations to power charts
         function addDeviceAnnotations(chartId, data) {
             if (!deviceTracker || !charts[chartId]) return;
@@ -2203,6 +2292,9 @@
             if (!chart.options.plugins) chart.options.plugins = {};
             if (!chart.options.plugins.annotation) chart.options.plugins.annotation = {};
             chart.options.plugins.annotation.annotations = {};
+            
+            // Add device event fills first (so they appear behind other annotations)
+            addDeviceEventFills(chartId, data);
             
             // Add annotations for significant events with device associations
             [...peaks, ...valleys].forEach((index, annotationIndex) => {
@@ -2249,7 +2341,10 @@
             try {
                 // Check if there's a stored association for this specific event
                 const associations = deviceTracker.deviceAssociations;
-                if (!associations || !associations.length) return null;
+                if (!associations || !associations.length) {
+                    console.log('No device associations found in deviceTracker');
+                    return null;
+                }
                 
                 // Look for associations within a small time window (±5 seconds)
                 const timeWindow = 5000; // 5 seconds in milliseconds
@@ -2260,11 +2355,13 @@
                 });
                 
                 if (matchingAssociation && matchingAssociation.deviceId) {
+                    console.log('Found matching association:', matchingAssociation);
                     // Get device details from configuration
                     const config = deviceTracker.getEnvironmentConfig();
                     if (config && config.devices) {
                         const device = config.devices.find(d => d.id === matchingAssociation.deviceId);
                         if (device) {
+                            console.log('Device association found:', device.name);
                             return {
                                 deviceName: device.name,
                                 confidence: matchingAssociation.confidence || 1.0
@@ -4286,9 +4383,11 @@
         }
 
         // Initialize the dashboard
-        function initialize() {
+        async function initialize() {
             try {
                 deviceTracker = new DeviceTracker();
+                // Wait for DeviceTracker to fully initialize before proceeding
+                await waitForDeviceTrackerInitialization();
             } catch (error) {
                 console.warn('DeviceTracker not available:', error);
                 deviceTracker = null;
@@ -4338,6 +4437,34 @@
             
             // Update layout when charts per row changes
             document.getElementById('chartsPerRow').addEventListener('change', updateChartsLayout);
+
+        // Helper function to wait for DeviceTracker initialization
+        async function waitForDeviceTrackerInitialization() {
+            if (!deviceTracker) return;
+            
+            // Wait for the configManager to be initialized
+            let attempts = 0;
+            const maxAttempts = 50; // 5 seconds max wait time
+            
+            while (attempts < maxAttempts) {
+                if (deviceTracker.configManager !== null) {
+                    // Give it a bit more time to load the data
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
+                    // Verify that the tracking data is loaded
+                    if (deviceTracker.deviceAssociations && deviceTracker.deviceAssociations.length >= 0) {
+                        console.log('DeviceTracker fully initialized with', deviceTracker.deviceAssociations.length, 'associations');
+                        break;
+                    }
+                }
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
+            if (attempts >= maxAttempts) {
+                console.warn('DeviceTracker initialization timeout, proceeding anyway');
+            }
+        }
             
             // Refresh modal data when event threshold changes
             document.getElementById('eventThreshold').addEventListener('change', () => {
@@ -4979,8 +5106,8 @@
         }
 
         // Start the dashboard when page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            initialize();
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initialize();
             checkCollectionStatus();
             
             // Add event listener for time range changes
