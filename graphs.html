@@ -6,7 +6,7 @@
     <title>Shelly 3EM Readings Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.1.0/chartjs-plugin-annotation.min.js"></script>
     <script src="config-manager.js"></script>
     <script src="device-tracking.js"></script>
     <script src="shelly-discovery.js"></script>
@@ -127,6 +127,180 @@
             bottom: 0;
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
             pointer-events: none;
+        }
+
+        /* Device Filter Controls */
+        .device-filter-controls {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 20px 25px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .device-filter-controls::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+            pointer-events: none;
+        }
+        
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .filter-header h4 {
+            margin: 0;
+            color: white;
+            font-size: 16px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .filter-action-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        
+        .filter-action-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+        
+        .device-filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .device-filter-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        .device-filter-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .device-filter-btn.active {
+            background: rgba(76, 172, 254, 0.8);
+            border-color: rgba(76, 172, 254, 0.6);
+            box-shadow: 0 2px 8px rgba(76, 172, 254, 0.3);
+        }
+        
+        .device-filter-btn.active:hover {
+            background: rgba(76, 172, 254, 0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 172, 254, 0.4);
+        }
+        
+        .device-filter-btn.hidden {
+            background: rgba(220, 53, 69, 0.6);
+            border-color: rgba(220, 53, 69, 0.4);
+            opacity: 0.7;
+        }
+        
+        .device-filter-btn.hidden:hover {
+            background: rgba(220, 53, 69, 0.8);
+            opacity: 1;
+        }
+        
+        .device-color-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            flex-shrink: 0;
+        }
+
+        /* Custom Legend Styles */
+        .custom-legend {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 15px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .legend-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        .legend-item.hidden {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+        
+        .legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            flex-shrink: 0;
+        }
+        
+        .legend-text {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 12px;
+            font-weight: 500;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         }
 
         /* Settings Side Panel */
@@ -813,6 +987,20 @@
             font-weight: bold;
         }
         
+        .event-start {
+            background-color: #e3f2fd !important;
+            color: #1976d2;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .event-end {
+            background-color: #ffebee !important;
+            color: #d32f2f;
+            font-weight: bold;
+            text-align: center;
+        }
+        
         .modal-stats {
             display: flex;
             justify-content: space-around;
@@ -1202,6 +1390,71 @@
             border-bottom: 2px solid rgba(255, 255, 255, 0.2);
         }
         
+        .chart-section.fullscreen .fullscreen-device-filters {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            min-width: 250px;
+            min-height: 150px;
+            max-height: 80vh;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 10000;
+            cursor: move;
+            overflow: auto;
+        }
+        
+        .chart-section.fullscreen .fullscreen-device-filters h4 {
+            margin: 0 0 10px 0;
+            color: white;
+            font-size: 14px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        .chart-section.fullscreen .fullscreen-device-filters .device-filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            max-height: calc(100% - 50px);
+            overflow-y: auto;
+            align-content: flex-start;
+        }
+        
+        .chart-section.fullscreen .fullscreen-device-filters .device-filter-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 180px;
+            flex: 0 0 180px;
+        }
+        
+        .chart-section.fullscreen .fullscreen-device-filters .device-filter-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .chart-section.fullscreen .fullscreen-device-filters .device-filter-btn.hidden {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .chart-section.fullscreen .fullscreen-device-filters .device-filter-btn.hidden:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
         .chart-section.fullscreen .chart-header h3 {
             font-size: 24px;
             color: white;
@@ -1356,6 +1609,20 @@
             <div class="status" id="status">Ready - Click 'Start Data Collection' to begin</div>
         </div>
 
+        <!-- Device Filter Controls -->
+        <div class="device-filter-controls" id="deviceFilterControls" style="display: none;">
+            <div class="filter-header">
+                <h4>🔍 Device Filters</h4>
+                <div class="filter-actions">
+                    <button class="filter-action-btn" onclick="showAllDevices()">Show All</button>
+                    <button class="filter-action-btn" onclick="hideAllDevices()">Hide All</button>
+                </div>
+            </div>
+            <div class="device-filter-buttons" id="deviceFilterButtons">
+                <!-- Device filter buttons will be populated here -->
+            </div>
+        </div>
+
         <!-- Chart Navigation Help -->
         <div class="chart-help">
             <div class="help-content">
@@ -1508,6 +1775,7 @@
                         <button class="fullscreen-btn" onclick="toggleFullscreen('powerASection', 'powerAChart')" id="powerAFullscreenBtn">🔍 Fullscreen</button>
                     </div>
                 </div>
+                <div class="custom-legend" id="powerALegend"></div>
                             <div class="chart-container" id="powerAContainer">
                 <canvas id="powerAChart"></canvas>
                 <div class="zoom-indicator" id="powerAZoomIndicator">Zoom: 1x</div>
@@ -1524,6 +1792,7 @@
                         <button class="fullscreen-btn" onclick="toggleFullscreen('powerBSection', 'powerBChart')" id="powerBFullscreenBtn">🔍 Fullscreen</button>
                     </div>
                 </div>
+                <div class="custom-legend" id="powerBLegend"></div>
                             <div class="chart-container" id="powerBContainer">
                 <canvas id="powerBChart"></canvas>
                 <div class="zoom-indicator" id="powerBZoomIndicator">Zoom: 1x</div>
@@ -1540,6 +1809,7 @@
                         <button class="fullscreen-btn" onclick="toggleFullscreen('powerCSection', 'powerCChart')" id="powerCFullscreenBtn">🔍 Fullscreen</button>
                     </div>
                 </div>
+                <div class="custom-legend" id="powerCLegend"></div>
                             <div class="chart-container" id="powerCContainer">
                 <canvas id="powerCChart"></canvas>
                 <div class="zoom-indicator" id="powerCZoomIndicator">Zoom: 1x</div>
@@ -1658,6 +1928,7 @@
                             <th>Delta</th>
                             <th>Accumulated Δ</th>
                             <th>Type</th>
+                            <th>Event Role</th>
                             <th>Device</th>
                             <th>Actions</th>
                         </tr>
@@ -1736,12 +2007,19 @@
         
         // Register the annotation plugin
         try {
-            if (typeof ChartAnnotation !== 'undefined') {
+            // The plugin is loaded as 'chartjs-plugin-annotation' in the global scope
+            if (typeof window['chartjs-plugin-annotation'] !== 'undefined') {
+                Chart.register(window['chartjs-plugin-annotation']);
+                console.log('Chart.js annotation plugin registered successfully');
+            } else if (typeof window.ChartAnnotation !== 'undefined') {
+                Chart.register(window.ChartAnnotation);
+                console.log('Chart.js annotation plugin registered successfully');
+            } else if (typeof ChartAnnotation !== 'undefined') {
                 Chart.register(ChartAnnotation);
-            } else if (typeof window.chartjs !== 'undefined' && window.chartjs.annotation) {
-                Chart.register(window.chartjs.annotation);
+                console.log('Chart.js annotation plugin registered successfully');
             } else {
                 console.warn('Chart.js annotation plugin not found. Device labels will not be displayed.');
+                console.log('Available globals:', Object.keys(window).filter(k => k.toLowerCase().includes('chart')));
             }
         } catch (error) {
             console.warn('Failed to register annotation plugin:', error);
@@ -1785,16 +2063,7 @@
                 },
                 plugins: {
                     legend: {
-                        display: true,
-                        position: 'top',
-                        labels: {
-                            color: 'rgba(255, 255, 255, 0.9)',
-                            font: {
-                                size: 12
-                            },
-                            usePointStyle: true,
-                            padding: 15
-                        }
+                        display: false  // Disable Chart.js legend completely
                     },
                     annotation: {
                         annotations: {}
@@ -2240,7 +2509,7 @@
                 
                 // Create a dataset that follows the curve for this event
                 const fillDataset = {
-                    label: `Device Fill: ${device.name}`,
+                    label: '', // Empty label to hide from legend
                     data: eventDataPoints,
                     borderColor: 'transparent',
                     backgroundColor: fillColor,
@@ -2250,7 +2519,9 @@
                     pointHoverRadius: 0,
                     tension: 0.4,
                     order: 100 + index, // Ensure it's drawn behind the main datasets
-                    hidden: false
+                    hidden: false,
+                    deviceId: event.deviceId, // Store device ID for filtering
+                    skipLegend: true // Flag to skip this dataset in legend
                 };
                 
                 // Add the fill dataset to the chart
@@ -2332,6 +2603,130 @@
                     };
                 }
             });
+            
+            // Add event start and end point markers for complete device events
+            addEventStartMarkers(chartId, data, phase);
+            addEventEndMarkers(chartId, data, phase);
+        }
+        
+        // Add event start point markers to the chart
+        function addEventStartMarkers(chartId, data, phase) {
+            if (!deviceTracker || !charts[chartId]) return;
+            
+            const chart = charts[chartId];
+            const deviceEvents = deviceTracker.deviceEvents || [];
+            const config = deviceTracker.getEnvironmentConfig();
+            
+            if (!config || !config.devices) return;
+            
+            // Filter events for this phase and with valid duration
+            const phaseEvents = deviceEvents.filter(event => 
+                event.phase === phase && 
+                event.startTime && 
+                event.endTime && 
+                event.duration > 0
+            );
+            
+            // Get current time range of chart data
+            if (data.length === 0) return;
+            const dataStartTime = data[0].x;
+            const dataEndTime = data[data.length - 1].x;
+            
+            // Add start point markers for each device event
+            phaseEvents.forEach((event, index) => {
+                // Check if event overlaps with current data range
+                if (event.endTime < dataStartTime || event.startTime > dataEndTime) return;
+                
+                // Get device info
+                const device = config.devices.find(d => d.id === event.deviceId);
+                if (!device) return;
+                
+                // Find the closest data point to the event start time
+                const startDataPoint = data.reduce((closest, point) => {
+                    const currentDiff = Math.abs(point.x - event.startTime);
+                    const closestDiff = Math.abs(closest.x - event.startTime);
+                    return currentDiff < closestDiff ? point : closest;
+                });
+                
+                if (startDataPoint) {
+                    const startAnnotationId = `event_start_${index}`;
+                    chart.options.plugins.annotation.annotations[startAnnotationId] = {
+                        type: 'point',
+                        xValue: startDataPoint.x,
+                        yValue: startDataPoint.y,
+                        backgroundColor: device.color || '#4A90E2',
+                        borderColor: '#ffffff',
+                        borderWidth: 2,
+                        radius: 8,
+                        pointStyle: 'triangle',
+                        rotation: 0,
+                        // Add click handler for editing
+                        onClick: function(ctx, event) {
+                            handleEventStartClick(event.deviceId, event.startTime, startDataPoint.x, startDataPoint.y);
+                        }
+                    };
+                }
+            });
+        }
+        
+        // Add event end point markers to the chart
+        function addEventEndMarkers(chartId, data, phase) {
+            if (!deviceTracker || !charts[chartId]) return;
+            
+            const chart = charts[chartId];
+            const deviceEvents = deviceTracker.deviceEvents || [];
+            const config = deviceTracker.getEnvironmentConfig();
+            
+            if (!config || !config.devices) return;
+            
+            // Filter events for this phase and with valid duration
+            const phaseEvents = deviceEvents.filter(event => 
+                event.phase === phase && 
+                event.startTime && 
+                event.endTime && 
+                event.duration > 0
+            );
+            
+            // Get current time range of chart data
+            if (data.length === 0) return;
+            const dataStartTime = data[0].x;
+            const dataEndTime = data[data.length - 1].x;
+            
+            // Add end point markers for each device event
+            phaseEvents.forEach((event, index) => {
+                // Check if event overlaps with current data range
+                if (event.endTime < dataStartTime || event.startTime > dataEndTime) return;
+                
+                // Get device info
+                const device = config.devices.find(d => d.id === event.deviceId);
+                if (!device) return;
+                
+                // Find the closest data point to the event end time
+                const endDataPoint = data.reduce((closest, point) => {
+                    const currentDiff = Math.abs(point.x - event.endTime);
+                    const closestDiff = Math.abs(closest.x - event.endTime);
+                    return currentDiff < closestDiff ? point : closest;
+                });
+                
+                if (endDataPoint) {
+                    const endAnnotationId = `event_end_${index}`;
+                    chart.options.plugins.annotation.annotations[endAnnotationId] = {
+                        type: 'point',
+                        xValue: endDataPoint.x,
+                        yValue: endDataPoint.y,
+                        backgroundColor: device.color || '#4A90E2',
+                        borderColor: '#ffffff',
+                        borderWidth: 2,
+                        radius: 8,
+                        pointStyle: 'triangle',
+                        rotation: 180, // Rotate triangle to point down for end marker
+                        // Add click handler for editing
+                        onClick: function(ctx, event) {
+                            handleEventEndClick(event.deviceId, event.endTime, endDataPoint.x, endDataPoint.y);
+                        }
+                    };
+                }
+            });
         }
         
         // Get device association for a specific event
@@ -2351,7 +2746,7 @@
                 const matchingAssociation = associations.find(assoc => {
                     return Math.abs(assoc.timestamp - timestamp) <= timeWindow &&
                            assoc.phase === phase &&
-                           assoc.type === eventType;
+                           (assoc.type === eventType || assoc.type === 'start');
                 });
                 
                 if (matchingAssociation && matchingAssociation.deviceId) {
@@ -2395,6 +2790,74 @@
             return null;
         }
         
+        // Create custom legend for power charts
+        function refreshChartLegend(chartId) {
+            const chart = charts[chartId];
+            if (!chart) {
+                console.log(`No chart found for ${chartId}`);
+                return;
+            }
+            
+            // Only create legends for power charts
+            if (!chartId.includes('power')) return;
+            
+            const legendId = chartId.replace('Chart', 'Legend');
+            const legendContainer = document.getElementById(legendId);
+            if (!legendContainer) {
+                console.log(`No legend container found for ${legendId}`);
+                return;
+            }
+            
+            // Clear existing legend
+            legendContainer.innerHTML = '';
+            
+            // Find main datasets to show in legend
+            const validLabels = [
+                'POWERA', 'POWERB', 'POWERC',
+                'POWERA (Trend)', 'POWERB (Trend)', 'POWERC (Trend)'
+            ];
+            
+            console.log(`Creating legend for ${chartId}, datasets:`, chart.data.datasets.map(d => d.label));
+            
+            let legendItemsCreated = 0;
+            chart.data.datasets.forEach((dataset, index) => {
+                const label = dataset.label || '';
+                
+                if (validLabels.includes(label)) {
+                    const legendItem = document.createElement('div');
+                    legendItem.className = `legend-item ${dataset.hidden ? 'hidden' : ''}`;
+                    legendItem.onclick = () => toggleDataset(chartId, index);
+                    
+                    const colorIndicator = document.createElement('div');
+                    colorIndicator.className = 'legend-color';
+                    colorIndicator.style.backgroundColor = dataset.borderColor || dataset.backgroundColor;
+                    
+                    const textElement = document.createElement('span');
+                    textElement.className = 'legend-text';
+                    textElement.textContent = label;
+                    
+                    legendItem.appendChild(colorIndicator);
+                    legendItem.appendChild(textElement);
+                    legendContainer.appendChild(legendItem);
+                    legendItemsCreated++;
+                }
+            });
+            
+            console.log(`Created ${legendItemsCreated} legend items for ${chartId}`);
+        }
+        
+        // Toggle dataset visibility
+        function toggleDataset(chartId, datasetIndex) {
+            const chart = charts[chartId];
+            if (!chart) return;
+            
+            const dataset = chart.data.datasets[datasetIndex];
+            dataset.hidden = !dataset.hidden;
+            
+            chart.update('active');
+            refreshChartLegend(chartId);
+        }
+
         // Refresh device annotations and styling on all power charts
         function refreshDeviceAnnotations() {
             ['powerAChart', 'powerBChart', 'powerCChart'].forEach(chartId => {
@@ -2402,7 +2865,13 @@
                     const data = charts[chartId].data.datasets[0].data;
                     styleDataPoints(chartId, data);
                     addDeviceAnnotations(chartId, data);
-                    charts[chartId].update('none');
+                    addDeviceEventFills(chartId, data);
+                    charts[chartId].update('active'); // Use 'active' mode to update legend
+                    
+                    // Force legend refresh after chart update
+                    setTimeout(() => {
+                        refreshChartLegend(chartId);
+                    }, 100);
                 }
             });
         }
@@ -2430,7 +2899,10 @@
                             styleDataPoints(chartId, charts[chartId].data.datasets[0].data);
                         }
                     }
-                    charts[chartId].update('none');
+                    
+                    // Force legend refresh after toggling device labels
+                    refreshChartLegend(chartId);
+                    charts[chartId].update('active'); // Use 'active' mode to update legend
                 }
             });
             
@@ -2533,6 +3005,13 @@
                 
                 try {
                     charts[id] = new Chart(ctx, config);
+                    
+                    // Initialize custom legend for power charts
+                    if (id.includes('power')) {
+                        setTimeout(() => {
+                            refreshChartLegend(id);
+                        }, 500);
+                    }
                 } catch (error) {
                     console.error(`Failed to create chart ${id}:`, error);
                 }
@@ -3145,6 +3624,11 @@
                 clearError();
                 lastDataUpdate = Date.now();
                 
+                // Refresh device filters after data is loaded
+                setTimeout(() => {
+                    refreshDeviceFilters();
+                }, 500);
+                
             } catch (error) {
                 console.error('Error loading data:', error);
                 updateStatus('error', `Error: ${error.message}`);
@@ -3552,6 +4036,10 @@
             // Calculate accumulated deltas until slope changes
             const accumulatedDeltas = calculateAccumulatedDeltas(data, peaks, valleys);
             
+            // Get event start points from device tracker
+            const eventStartPoints = getEventStartPoints(data);
+            const eventEndPoints = getEventEndPoints(data);
+            
             // Create array of data with original indices for sorting
             const dataWithIndices = data.map((point, index) => ({ point, originalIndex: index }));
             
@@ -3608,6 +4096,31 @@
                 let cssClass = '';
                 let isEvent = false;
                 
+                // Check if this point is an event start or end
+                let eventRole = '-';
+                let eventRoleClass = '';
+                
+                const startPoint = eventStartPoints.find(sp => sp.index === index);
+                const endPoint = eventEndPoints.find(ep => ep.index === index);
+                
+                if (startPoint) {
+                    const config = deviceTracker?.getEnvironmentConfig();
+                    const device = config?.devices?.find(d => d.id === startPoint.deviceId);
+                    eventRole = `🔵 Event Start`;
+                    if (device) {
+                        eventRole += `<br><small style="color: #007bff;">${device.name}</small>`;
+                    }
+                    eventRoleClass = 'event-start';
+                } else if (endPoint) {
+                    const config = deviceTracker?.getEnvironmentConfig();
+                    const device = config?.devices?.find(d => d.id === endPoint.deviceId);
+                    eventRole = `🔴 Event End`;
+                    if (device) {
+                        eventRole += `<br><small style="color: #dc3545;">${device.name}</small>`;
+                    }
+                    eventRoleClass = 'event-end';
+                }
+                
                 // Get event threshold from UI
                 const eventThreshold = parseFloat(document.getElementById('eventThreshold')?.value || 10);
                 
@@ -3635,12 +4148,18 @@
                 let deviceCell = '-';
                 let actionsCell = '';
                 
-                if (isEvent && deviceTracker) { // Only for peaks and valleys (no power threshold)
+                // Check if this is a start point that should be editable
+                const isStartPoint = startPoint && !endPoint;
+                
+                // Add "Set Event Start" button for NORMAL points
+                if (type === 'Normal' && deviceTracker) {
+                    actionsCell = `<button onclick="setEventStart(${index})" class="btn btn-sm btn-outline-primary">🎯 Set Event Start</button>`;
+                } else if ((isEvent && deviceTracker) || isStartPoint) { // For peaks, valleys, and start points
                     // Use accumulated delta for device association instead of single step delta
                     const eventPowerDelta = accumulatedDelta || deltaValue;
                     
                     const event = {
-                        type: type.toLowerCase(),
+                        type: isStartPoint ? 'start' : type.toLowerCase(),
                         phase: currentModalData.phase,
                         powerDelta: eventPowerDelta, // Use accumulated delta for full event
                         timestamp: point.x,
@@ -3653,7 +4172,7 @@
                     const confirmedAssociation = associations.find(assoc => {
                         return Math.abs(assoc.timestamp - point.x) <= timeWindow &&
                                assoc.phase === currentModalData.phase &&
-                               assoc.type === type.toLowerCase();
+                               (assoc.type === type.toLowerCase() || assoc.type === 'start');
                     });
                     
                     if (confirmedAssociation) {
@@ -3673,9 +4192,14 @@
                         
                         actionsCell = `
                             <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px; margin: 0; background: #6c757d;" 
-                                    onclick="showDeviceAssociationDialog(${index}, '${type}', ${eventPowerDelta})" 
+                                    onclick="showDeviceAssociationDialog(${index}, '${isStartPoint ? 'Start' : type}', ${eventPowerDelta})" 
                                     title="Change association">
                                 🔄 Change
+                            </button>
+                            <button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px; margin: 0; background: #dc3545; margin-left: 4px;" 
+                                    onclick="removeDeviceAssociation(${index}, '${isStartPoint ? 'Start' : type}', ${eventPowerDelta})" 
+                                    title="Remove association">
+                                🗑️ Remove
                             </button>
                         `;
                     } else {
@@ -3702,7 +4226,7 @@
                         
                         actionsCell = `
                             <button class="btn" style="padding: 4px 8px; font-size: 11px; margin: 0;" 
-                                    onclick="showDeviceAssociationDialog(${index}, '${type}', ${eventPowerDelta})">
+                                    onclick="showDeviceAssociationDialog(${index}, '${isStartPoint ? 'Start' : type}', ${eventPowerDelta})">
                                 🔗 Associate
                             </button>
                         `;
@@ -3716,6 +4240,7 @@
                     <td class="${deltaClass}">${deltaText}</td>
                     <td class="${accumulatedClass}">${accumulatedText}</td>
                     <td>${type}</td>
+                    <td class="${eventRoleClass}">${eventRole}</td>
                     <td>${deviceCell}</td>
                     <td>${actionsCell}</td>
                 `;
@@ -3757,6 +4282,143 @@
             return accumulatedDeltas;
         }
         
+        // Get event start points from device tracker
+        function getEventStartPoints(data) {
+            if (!deviceTracker) return [];
+            
+            const deviceEvents = deviceTracker.deviceEvents || [];
+            const phase = currentModalData?.phase;
+            if (!phase) return [];
+            
+            const phaseEvents = deviceEvents.filter(event => 
+                event.phase === phase && 
+                event.startTime && 
+                (event.endTime || event.eventType === 'manual_start') // Include manual starts without end time
+            );
+            
+            console.log(`Found ${phaseEvents.length} device events for phase ${phase}:`, phaseEvents.map(e => ({
+                deviceId: e.deviceId,
+                startTime: new Date(e.startTime).toLocaleTimeString(),
+                endTime: new Date(e.endTime).toLocaleTimeString(),
+                duration: (e.duration / 1000).toFixed(1) + 's',
+                id: e.id
+            })));
+            
+            // Remove duplicate events (same device, similar start/end times)
+            const uniqueEvents = [];
+            phaseEvents.forEach(event => {
+                const isDuplicate = uniqueEvents.some(existing => 
+                    existing.deviceId === event.deviceId &&
+                    Math.abs(existing.startTime - event.startTime) < 5000 && // Within 5 seconds
+                    Math.abs(existing.endTime - event.endTime) < 5000
+                );
+                
+                if (!isDuplicate) {
+                    uniqueEvents.push(event);
+                } else {
+                    console.log(`Skipping duplicate event for device ${event.deviceId}: ${new Date(event.startTime).toLocaleTimeString()}`);
+                }
+            });
+            
+            // Find data points that match event start times
+            const startPoints = [];
+            const usedIndices = new Set(); // Prevent duplicate markers
+            
+            uniqueEvents.forEach(event => {
+                console.log(`Looking for event start: ${new Date(event.startTime).toLocaleTimeString()}, Device: ${event.deviceId}`);
+                
+                // Find the closest data point to the event start time
+                let closestIndex = -1;
+                let minDiff = Infinity;
+                
+                data.forEach((point, index) => {
+                    const diff = Math.abs(point.x - event.startTime);
+                    if (diff < minDiff && diff < 2000 && !usedIndices.has(index)) { // Within 2 seconds and not already used
+                        minDiff = diff;
+                        closestIndex = index;
+                    }
+                });
+                
+                if (closestIndex !== -1) {
+                    console.log(`Found start point at index ${closestIndex}: ${new Date(data[closestIndex].x).toLocaleTimeString()}`);
+                    startPoints.push({
+                        index: closestIndex,
+                        deviceId: event.deviceId,
+                        eventId: event.id
+                    });
+                    usedIndices.add(closestIndex);
+                } else {
+                    console.log(`No matching data point found for event start time ${new Date(event.startTime).toLocaleTimeString()}`);
+                }
+            });
+            
+            return startPoints;
+        }
+        
+        // Get event end points from device tracker
+        function getEventEndPoints(data) {
+            if (!deviceTracker) return [];
+            
+            const deviceEvents = deviceTracker.deviceEvents || [];
+            const phase = currentModalData?.phase;
+            if (!phase) return [];
+            
+            const phaseEvents = deviceEvents.filter(event => 
+                event.phase === phase && 
+                event.startTime && 
+                event.endTime && 
+                event.duration > 0
+            );
+            
+            // Remove duplicate events (same device, similar start/end times)
+            const uniqueEvents = [];
+            phaseEvents.forEach(event => {
+                const isDuplicate = uniqueEvents.some(existing => 
+                    existing.deviceId === event.deviceId &&
+                    Math.abs(existing.startTime - event.startTime) < 5000 && // Within 5 seconds
+                    Math.abs(existing.endTime - event.endTime) < 5000
+                );
+                
+                if (!isDuplicate) {
+                    uniqueEvents.push(event);
+                }
+            });
+            
+            // Find data points that match event end times
+            const endPoints = [];
+            const usedEndIndices = new Set(); // Prevent duplicate markers
+            
+            uniqueEvents.forEach(event => {
+                console.log(`Looking for event end: ${new Date(event.endTime).toLocaleTimeString()}, Device: ${event.deviceId}`);
+                
+                // Find the closest data point to the event end time
+                let closestIndex = -1;
+                let minDiff = Infinity;
+                
+                data.forEach((point, index) => {
+                    const diff = Math.abs(point.x - event.endTime);
+                    if (diff < minDiff && diff < 2000 && !usedEndIndices.has(index)) { // Within 2 seconds and not already used
+                        minDiff = diff;
+                        closestIndex = index;
+                    }
+                });
+                
+                if (closestIndex !== -1) {
+                    console.log(`Found end point at index ${closestIndex}: ${new Date(data[closestIndex].x).toLocaleTimeString()}`);
+                    endPoints.push({
+                        index: closestIndex,
+                        deviceId: event.deviceId,
+                        eventId: event.id
+                    });
+                    usedEndIndices.add(closestIndex);
+                } else {
+                    console.log(`No matching data point found for event end time ${new Date(event.endTime).toLocaleTimeString()}`);
+                }
+            });
+            
+            return endPoints;
+        }
+        
         function getCurrentReadings(timestamp) {
             // This is a simplified version - in a real implementation,
             // we'd need to get the actual readings from the CSV data at this timestamp
@@ -3785,6 +4447,18 @@
                 readings: getCurrentReadings(point.x)
             };
             
+            // For start events, we want to show a different message
+            const isStartEvent = type.toLowerCase() === 'start';
+            
+            // Check for existing association
+            const associations = deviceTracker.deviceAssociations;
+            const timeWindow = 5000; // 5 seconds window
+            const existingAssociation = associations.find(assoc => {
+                return Math.abs(assoc.timestamp - point.x) <= timeWindow &&
+                       assoc.phase === currentModalData.phase &&
+                       (assoc.type === type.toLowerCase() || assoc.type === 'start');
+            });
+            
             // Get device suggestions
             const suggestions = deviceTracker.analyzeEvent(event);
             const config = deviceTracker.getEnvironmentConfig();
@@ -3797,8 +4471,8 @@
             // Create device selection dialog
             let dialogContent = `
                 <div style="max-width: 500px;">
-                    <h3>Associate Device with ${type} Event</h3>
-                    <p><strong>Event:</strong> ${type} of ${Math.abs(eventPowerDelta).toFixed(1)}W on Phase ${currentModalData.phase}</p>
+                    <h3>Associate Device with ${isStartEvent ? 'Event Start' : type} Event</h3>
+                    <p><strong>Event:</strong> ${isStartEvent ? 'Event Start' : type} of ${Math.abs(eventPowerDelta).toFixed(1)}W on Phase ${currentModalData.phase}</p>
                     <p><strong>Time:</strong> ${formatDateTime(new Date(point.x))}</p>
                     
                     <h4>Device Suggestions:</h4>
@@ -3829,7 +4503,8 @@
             const phaseDevices = config.devices.filter(d => d.phase === currentModalData.phase);
             phaseDevices.forEach(device => {
                 const roomName = getDeviceRoom(device.roomId, config);
-                dialogContent += `<option value="${device.id}">${device.name} (${roomName})</option>`;
+                const isSelected = existingAssociation && existingAssociation.deviceId === device.id ? 'selected' : '';
+                dialogContent += `<option value="${device.id}" ${isSelected}>${device.name} (${roomName})</option>`;
             });
             
             dialogContent += `
@@ -3934,6 +4609,78 @@
             window.currentEvent = null;
             window.currentEventIndex = null;
         }
+
+        function removeDeviceAssociation(index, type, eventPowerDelta) {
+            if (!currentModalData || !deviceTracker) return;
+            
+            const point = currentModalData.data[index];
+            const event = {
+                type: type.toLowerCase(),
+                phase: currentModalData.phase,
+                powerDelta: eventPowerDelta,
+                timestamp: point.x
+            };
+            
+            console.log('Attempting to remove device association for event:', {
+                index,
+                type,
+                eventPowerDelta,
+                point: {
+                    x: new Date(point.x).toLocaleTimeString(),
+                    y: point.y
+                },
+                event
+            });
+            
+            // Confirm removal
+            const deviceName = getDeviceNameFromAssociation(point.x, currentModalData.phase, type.toLowerCase());
+            const confirmMessage = `Are you sure you want to remove ALL device associations for this event (including start and end points)? This will remove the association from all related data points.`;
+            
+            if (confirm(confirmMessage)) {
+                const removedCount = deviceTracker.removeAllEventAssociations(event);
+                
+                if (removedCount > 0) {
+                    // Refresh the table to show the removed associations
+                    populateRecordsTableWithTracking(
+                        currentModalData.data, 
+                        currentModalData.peaks, 
+                        currentModalData.valleys, 
+                        currentModalData.unit
+                    );
+                    
+                    // Refresh device annotations on charts
+                    refreshDeviceAnnotations();
+                    
+                    showStatus(`Removed ${removedCount} device association(s) successfully`, 'success');
+                } else {
+                    showStatus('No device associations found to remove', 'warning');
+                }
+            }
+        }
+
+        function getDeviceNameFromAssociation(timestamp, phase, eventType) {
+            if (!deviceTracker) return 'Unknown Device';
+            
+            const associations = deviceTracker.deviceAssociations;
+            const timeWindow = 5000; // 5 seconds window
+            const matchingAssociation = associations.find(assoc => {
+                return Math.abs(assoc.timestamp - timestamp) <= timeWindow &&
+                       assoc.phase === phase &&
+                       (assoc.type === eventType || assoc.type === 'start');
+            });
+            
+            if (matchingAssociation && matchingAssociation.deviceId) {
+                const config = deviceTracker.getEnvironmentConfig();
+                if (config && config.devices) {
+                    const device = config.devices.find(d => d.id === matchingAssociation.deviceId);
+                    if (device) {
+                        return device.name;
+                    }
+                }
+            }
+            
+            return 'Unknown Device';
+        }
         
         function formatDateTime(date) {
             const day = String(date.getDate()).padStart(2, '0');
@@ -3957,6 +4704,12 @@
                 button.textContent = '🔍 Fullscreen';
                 button.classList.remove('exit-fullscreen');
                 
+                // Remove fullscreen device filters
+                const fullscreenFilters = section.querySelector('.fullscreen-device-filters');
+                if (fullscreenFilters) {
+                    fullscreenFilters.remove();
+                }
+                
                 // Re-enable body scroll
                 document.body.style.overflow = '';
                 
@@ -3973,6 +4726,9 @@
                 button.textContent = '❌ Exit Fullscreen';
                 button.classList.add('exit-fullscreen');
                 
+                // Add device filters to fullscreen view
+                addFullscreenDeviceFilters(section);
+                
                 // Disable body scroll to prevent scrolling behind fullscreen
                 document.body.style.overflow = 'hidden';
                 
@@ -3983,6 +4739,293 @@
                     }
                 }, 100);
             }
+        }
+        
+        // Add device filters to fullscreen view
+        function addFullscreenDeviceFilters(section) {
+            if (!deviceTracker) return;
+            
+            const config = deviceTracker.getEnvironmentConfig();
+            if (!config || !config.devices || config.devices.length === 0) return;
+            
+            // Get only devices that have events in the current graph data
+            const devicesWithEvents = getDevicesWithEvents();
+            
+            if (devicesWithEvents.length === 0) return; // Don't show filters if no devices have events
+            
+            // Create fullscreen device filter container
+            const filtersContainer = document.createElement('div');
+            filtersContainer.className = 'fullscreen-device-filters';
+            filtersContainer.style.cssText = `
+                position: absolute;
+                top: 20px;
+                right: 20px;
+                min-width: 250px;
+                min-height: 150px;
+                max-height: 80vh;
+                background: rgba(255, 255, 255, 0.08);
+                border-radius: 15px;
+                padding: 15px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                cursor: default;
+                z-index: 10000;
+                overflow: auto;
+                pointer-events: auto;
+            `;
+            
+            // Add drag handle (title bar) - ONLY this area should allow dragging
+            const titleBar = document.createElement('div');
+            titleBar.className = 'title-bar';
+            titleBar.style.cssText = `
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 10px;
+                padding-bottom: 8px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+                cursor: move;
+                user-select: none;
+            `;
+            
+            const title = document.createElement('h4');
+            title.textContent = '🔍 Device Filters';
+            title.style.cssText = `
+                margin: 0;
+                color: white;
+                font-size: 14px;
+                font-weight: bold;
+            `;
+            
+            const closeButton = document.createElement('button');
+            closeButton.textContent = '×';
+            closeButton.style.cssText = `
+                background: none;
+                border: none;
+                color: white;
+                font-size: 18px;
+                cursor: pointer;
+                padding: 0;
+                width: 20px;
+                height: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                transition: background-color 0.2s;
+            `;
+            closeButton.onmouseover = () => closeButton.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+            closeButton.onmouseout = () => closeButton.style.backgroundColor = 'transparent';
+            closeButton.onclick = () => filtersContainer.remove();
+            
+            titleBar.appendChild(title);
+            titleBar.appendChild(closeButton);
+            filtersContainer.appendChild(titleBar);
+            
+            const buttonsContainer = document.createElement('div');
+            buttonsContainer.className = 'device-filter-buttons';
+            buttonsContainer.style.cssText = `
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                max-height: calc(100% - 50px);
+                overflow-y: auto;
+                align-content: flex-start;
+            `;
+            
+            // Create device filter buttons
+            devicesWithEvents.forEach(device => {
+                const isHidden = hiddenDevices.has(device.id);
+                const button = document.createElement('button');
+                button.className = `device-filter-btn ${isHidden ? 'hidden' : 'active'}`;
+                button.setAttribute('data-device-id', device.id);
+                button.onclick = () => toggleDeviceFilter(device.id);
+                button.style.cssText = `
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 8px 12px;
+                    border: none;
+                    border-radius: 8px;
+                    background: ${isHidden ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)'};
+                    color: white;
+                    cursor: pointer;
+                    font-size: 12px;
+                    transition: all 0.2s;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    width: 180px;
+                    flex: 0 0 180px;
+                `;
+                
+                const colorIndicator = document.createElement('div');
+                colorIndicator.className = 'device-color-indicator';
+                colorIndicator.style.cssText = `
+                    width: 12px;
+                    height: 12px;
+                    border-radius: 50%;
+                    background-color: ${device.color || '#cccccc'};
+                    flex-shrink: 0;
+                `;
+                
+                const deviceName = document.createElement('span');
+                deviceName.textContent = device.name;
+                deviceName.style.cssText = `
+                    flex: 1;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                `;
+                
+                const statusIcon = document.createElement('span');
+                statusIcon.textContent = isHidden ? '👁️‍🗨️' : '👁️';
+                statusIcon.style.cssText = `
+                    font-size: 10px;
+                    flex-shrink: 0;
+                `;
+                
+                button.appendChild(colorIndicator);
+                button.appendChild(deviceName);
+                button.appendChild(statusIcon);
+                
+                // Add hover effects
+                button.onmouseover = () => {
+                    button.style.background = isHidden ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.3)';
+                };
+                button.onmouseout = () => {
+                    button.style.background = isHidden ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)';
+                };
+                
+                buttonsContainer.appendChild(button);
+            });
+            
+            filtersContainer.appendChild(buttonsContainer);
+            section.appendChild(filtersContainer);
+            
+            // Add drag functionality ONLY from title bar
+            makeDraggable(filtersContainer, titleBar);
+            
+            // Add resize functionality ONLY from resize handle
+            makeResizable(filtersContainer);
+        }
+        
+        // Simple drag functionality - ONLY works on title bar
+        function makeDraggable(container, titleBar) {
+            let dragState = null;
+            
+            function handleMouseMove(e) {
+                if (!dragState) return;
+                
+                const deltaX = e.clientX - dragState.startX;
+                const deltaY = e.clientY - dragState.startY;
+                
+                const newLeft = dragState.initialLeft + deltaX;
+                const newTop = dragState.initialTop + deltaY;
+                
+                // Keep within bounds
+                const maxLeft = window.innerWidth - container.offsetWidth;
+                const maxTop = window.innerHeight - container.offsetHeight;
+                
+                container.style.left = Math.max(0, Math.min(newLeft, maxLeft)) + 'px';
+                container.style.top = Math.max(0, Math.min(newTop, maxTop)) + 'px';
+            }
+            
+            function handleMouseUp() {
+                if (dragState) {
+                    dragState = null;
+                    document.body.style.userSelect = '';
+                    document.removeEventListener('mousemove', handleMouseMove);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                }
+            }
+            
+            titleBar.onmousedown = function(e) {
+                // Don't drag if clicking close button
+                if (e.target.innerHTML === '×') return;
+                
+                dragState = {
+                    startX: e.clientX,
+                    startY: e.clientY,
+                    initialLeft: container.offsetLeft,
+                    initialTop: container.offsetTop
+                };
+                
+                document.body.style.userSelect = 'none';
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+                e.preventDefault();
+            };
+        }
+        
+        // Simple resize functionality - ONLY works on resize handle
+        function makeResizable(container) {
+            // Create resize handle
+            const resizeHandle = document.createElement('div');
+            resizeHandle.className = 'resize-handle';
+            resizeHandle.innerHTML = '↘';
+            resizeHandle.style.cssText = `
+                position: absolute;
+                bottom: 0;
+                right: 0;
+                width: 25px;
+                height: 25px;
+                cursor: se-resize;
+                background: rgba(255, 255, 255, 0.5);
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 14px;
+                border-radius: 0 0 8px 0;
+                user-select: none;
+                z-index: 1000;
+            `;
+            container.appendChild(resizeHandle);
+            
+            let resizeState = null;
+            
+            function handleMouseMove(e) {
+                if (!resizeState) return;
+                
+                const deltaX = e.clientX - resizeState.startX;
+                const deltaY = e.clientY - resizeState.startY;
+                
+                const newWidth = Math.max(250, resizeState.initialWidth + deltaX);
+                const newHeight = Math.max(150, resizeState.initialHeight + deltaY);
+                
+                const maxWidth = window.innerWidth - 40;
+                const maxHeight = window.innerHeight * 0.8;
+                
+                container.style.width = Math.min(newWidth, maxWidth) + 'px';
+                container.style.height = Math.min(newHeight, maxHeight) + 'px';
+            }
+            
+            function handleMouseUp() {
+                if (resizeState) {
+                    resizeState = null;
+                    document.body.style.userSelect = '';
+                    document.removeEventListener('mousemove', handleMouseMove);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                }
+            }
+            
+            resizeHandle.onmousedown = function(e) {
+                resizeState = {
+                    startX: e.clientX,
+                    startY: e.clientY,
+                    initialWidth: container.offsetWidth,
+                    initialHeight: container.offsetHeight
+                };
+                
+                document.body.style.userSelect = 'none';
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+                e.preventDefault();
+                e.stopPropagation();
+            };
         }
         
 
@@ -4074,6 +5117,15 @@
                 readings: getCurrentReadings(dataPoint.x)
             };
             
+            // Check for existing association
+            const associations = deviceTracker.deviceAssociations;
+            const timeWindow = 5000; // 5 seconds window
+            const existingAssociation = associations.find(assoc => {
+                return Math.abs(assoc.timestamp - dataPoint.x) <= timeWindow &&
+                       assoc.phase === phase &&
+                       (assoc.type === eventType || assoc.type === 'start');
+            });
+            
             // Get device suggestions
             const suggestions = deviceTracker.analyzeEvent(event);
             const config = deviceTracker.getEnvironmentConfig();
@@ -4102,11 +5154,11 @@
             // Create device selection dialog
             let dialogContent = `
                 <div style="max-width: 600px;">
-                    <h3>🔗 Associate Device with ${eventType.charAt(0).toUpperCase() + eventType.slice(1)} Event</h3>
+                    <h3>🔗 Associate Device with ${eventType === 'start' ? 'Event Start' : eventType.charAt(0).toUpperCase() + eventType.slice(1)} Event</h3>
                     <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                         <p><strong>📊 Event Details:</strong></p>
                         <ul style="margin: 10px 0; padding-left: 20px;">
-                            <li><strong>Type:</strong> ${eventType.charAt(0).toUpperCase() + eventType.slice(1)} event</li>
+                            <li><strong>Type:</strong> ${eventType === 'start' ? 'Event Start' : eventType.charAt(0).toUpperCase() + eventType.slice(1)} event</li>
                             <li><strong>Power Change:</strong> ${eventPowerDelta > 0 ? '+' : ''}${eventPowerDelta.toFixed(1)}W</li>
                             <li><strong>Phase:</strong> ${phase}</li>
                             <li><strong>Time:</strong> ${formatDateTime(new Date(dataPoint.x))}</li>
@@ -4158,7 +5210,8 @@
             const phaseDevices = config.devices.filter(d => d.phase === phase);
             phaseDevices.forEach(device => {
                 const roomName = getDeviceRoom(device.roomId, config);
-                dialogContent += `<option value="${device.id}">${device.name} (${roomName} - ${device.type})</option>`;
+                const isSelected = existingAssociation && existingAssociation.deviceId === device.id ? 'selected' : '';
+                dialogContent += `<option value="${device.id}" ${isSelected}>${device.name} (${roomName} - ${device.type})</option>`;
             });
             
             dialogContent += `
@@ -4232,73 +5285,227 @@
             document.addEventListener('keydown', escapeHandler);
         }
 
+        // Find the actual event start time by looking backwards from peak
+        function findEventStart(data, peakIndex, baselinePower = null) {
+            if (peakIndex <= 0) return data[0].x;
+            
+            const peakPower = data[peakIndex].y;
+            const peakTime = data[peakIndex].x;
+            const startSearchIndex = Math.max(0, peakIndex - 50); // Look back up to 50 points
+            
+            // If no baseline provided, estimate it from nearby low points
+            if (baselinePower === null) {
+                const nearbyPoints = data.slice(Math.max(0, peakIndex - 20), peakIndex - 5);
+                baselinePower = nearbyPoints.length > 0 ? 
+                    Math.min(...nearbyPoints.map(p => p.y)) : 
+                    data[Math.max(0, peakIndex - 10)].y;
+            }
+            
+            // Find where the curve starts rising significantly
+            // Use a more sophisticated approach: look for the first significant change in gradient
+            const powerRange = peakPower - baselinePower;
+            const minThreshold = baselinePower + Math.max(10, powerRange * 0.02); // At least 10W or 2% of range
+            
+            console.log(`Finding event start: Peak=${peakPower.toFixed(2)}W, Baseline=${baselinePower.toFixed(2)}W, MinThreshold=${minThreshold.toFixed(2)}W`);
+            
+            // Simplified approach: look for the first significant drop in power going backwards
+            let bestStartIndex = peakIndex;
+            let minPowerFound = peakPower;
+            
+            // First, find the lowest power point in the search range
+            for (let i = peakIndex - 1; i >= startSearchIndex; i--) {
+                const currentPower = data[i].y;
+                console.log(`Checking point ${i}: power=${currentPower.toFixed(2)}W, minFound=${minPowerFound.toFixed(2)}W`);
+                
+                if (currentPower < minPowerFound) {
+                    minPowerFound = currentPower;
+                    bestStartIndex = i;
+                }
+            }
+            
+            // If we found a significantly lower point, use it as the start
+            if (bestStartIndex !== peakIndex && (peakPower - minPowerFound) > 20) {
+                const actualStart = data[bestStartIndex].x;
+                console.log(`✅ Event start found: Peak at ${new Date(peakTime).toLocaleTimeString()}, actual start at ${new Date(actualStart).toLocaleTimeString()}, diff: ${((peakTime - actualStart) / 1000).toFixed(1)}s`);
+                console.log(`Power drop: ${peakPower.toFixed(2)}W -> ${minPowerFound.toFixed(2)}W (${(peakPower - minPowerFound).toFixed(2)}W difference)`);
+                return actualStart;
+            }
+            
+            console.log(`No significant power drop found, using fallback approach`);
+            
+            // Fallback: look for any point that's significantly lower than the peak
+            for (let i = peakIndex - 1; i >= startSearchIndex; i--) {
+                const currentPower = data[i].y;
+                const powerDrop = peakPower - currentPower;
+                
+                if (powerDrop > 30) { // At least 30W drop from peak
+                    const actualStart = data[i + 1].x;
+                    console.log(`⚠️ Event start found (fallback): Peak at ${new Date(peakTime).toLocaleTimeString()}, actual start at ${new Date(actualStart).toLocaleTimeString()}, diff: ${((peakTime - actualStart) / 1000).toFixed(1)}s`);
+                    console.log(`Power drop: ${peakPower.toFixed(2)}W -> ${currentPower.toFixed(2)}W (${powerDrop.toFixed(2)}W difference)`);
+                    return actualStart;
+                }
+            }
+            
+            // If we can't find a clear start, return a point a few steps before the peak
+            const fallbackIndex = Math.max(0, peakIndex - 3); // Go back 3 points from peak
+            const fallbackStart = data[fallbackIndex].x;
+            console.log(`❌ Event start fallback: Peak at ${new Date(peakTime).toLocaleTimeString()}, fallback start at ${new Date(fallbackStart).toLocaleTimeString()}, diff: ${((peakTime - fallbackStart) / 1000).toFixed(1)}s`);
+            console.log(`Using fallback because no significant power drop found. Peak power: ${peakPower.toFixed(2)}W, Min power found: ${minPowerFound.toFixed(2)}W`);
+            return fallbackStart;
+        }
+        
+        // Find the actual event end time by looking forward from valley
+        function findEventEnd(data, valleyIndex, baselinePower = null) {
+            if (valleyIndex >= data.length - 1) return data[data.length - 1].x;
+            
+            const valleyPower = data[valleyIndex].y;
+            const endSearchIndex = Math.min(data.length - 1, valleyIndex + 50); // Look forward up to 50 points
+            
+            // If no baseline provided, estimate it from nearby points after the valley
+            if (baselinePower === null) {
+                const nearbyPoints = data.slice(valleyIndex + 5, Math.min(data.length, valleyIndex + 20));
+                baselinePower = nearbyPoints.length > 0 ? 
+                    Math.min(...nearbyPoints.map(p => p.y)) : 
+                    data[Math.min(data.length - 1, valleyIndex + 10)].y;
+            }
+            
+            // Find where the curve stabilizes after the valley
+            const powerThreshold = baselinePower + Math.abs(valleyPower - baselinePower) * 0.1; // 10% above baseline
+            
+            for (let i = valleyIndex + 1; i <= endSearchIndex; i++) {
+                if (data[i].y <= powerThreshold) {
+                    // Found where it stabilizes
+                    return data[i].x;
+                }
+            }
+            
+            // If we can't find a clear end, return a point a few steps after the valley
+            return data[Math.min(data.length - 1, valleyIndex + 5)].x;
+        }
+        
+        // Find corresponding valley for a peak (or vice versa) to create complete events
+        function findCorrespondingEvent(data, eventIndex, eventType, searchDirection = 'forward') {
+            const targetType = eventType === 'peak' ? 'valley' : 'peak';
+            const { peaks, valleys } = analyzeChartData(data, 'power');
+            const targetEvents = targetType === 'peak' ? peaks : valleys;
+            
+            const eventTime = data[eventIndex].x;
+            const maxSearchTime = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+            
+            let bestMatch = null;
+            let bestTimeDiff = Infinity;
+            
+            targetEvents.forEach(targetIndex => {
+                const targetTime = data[targetIndex].x;
+                const timeDiff = Math.abs(targetTime - eventTime);
+                
+                // Check if it's in the right direction and within time limit
+                const isRightDirection = searchDirection === 'forward' ? 
+                    targetTime > eventTime : targetTime < eventTime;
+                
+                if (isRightDirection && timeDiff < maxSearchTime && timeDiff < bestTimeDiff) {
+                    bestMatch = targetIndex;
+                    bestTimeDiff = timeDiff;
+                }
+            });
+            
+            return bestMatch;
+        }
+
         // Associate device from chart dialog
         function associateDeviceFromChart(deviceId, confidence) {
-            if (!window.currentChartEvent || !deviceTracker) return;
+            if (!window.currentChartEvent || !deviceTracker) {
+                console.error('Cannot associate device: currentChartEvent or deviceTracker is null');
+                return;
+            }
             
-            // Record the basic association
+            // Record the basic association (peak/valley for device identification)
             deviceTracker.recordDeviceAssociation(window.currentChartEvent, deviceId, confidence);
             
-            // Check if this is a turn-on event and look for a corresponding turn-off event
-            if (window.currentChartEvent.type === 'peak' && window.currentChartEvent.powerDelta > 50) {
-                // Look for a corresponding valley (turn-off) event for this device
-                const associations = deviceTracker.getAssociations();
-                const recentAssociations = associations.filter(assoc => 
-                    assoc.deviceId === deviceId && 
-                    assoc.type === 'valley' && 
-                    assoc.timestamp > window.currentChartEvent.timestamp - (2 * 60 * 60 * 1000) && // Within 2 hours after
-                    assoc.timestamp < window.currentChartEvent.timestamp + (8 * 60 * 60 * 1000)   // Within 8 hours
-                );
+            // Get the chart data to find actual event boundaries
+            const chartId = Object.keys(charts).find(id => 
+                getPhaseFromChartId(id) === window.currentChartEvent.phase && id.includes('power')
+            );
+            
+            if (!chartId || !charts[chartId]) {
+                console.warn('Could not find chart for phase', window.currentChartEvent.phase);
+                return;
+            }
+            
+            const data = charts[chartId].data.datasets[0].data;
+            const eventIndex = window.currentChartEventIndex;
+            const eventType = window.currentChartEvent.type;
+            
+            // Find the corresponding event (peak->valley or valley->peak)
+            let startEvent, endEvent;
+            
+            if (eventType === 'peak') {
+                // This is a turn-on event, find the corresponding turn-off (valley)
+                const valleyIndex = findCorrespondingEvent(data, eventIndex, 'peak', 'forward');
                 
-                if (recentAssociations.length > 0) {
-                    // Find the closest valley event
-                    const closestValley = recentAssociations.reduce((closest, current) => {
-                        const currentDiff = Math.abs(current.timestamp - window.currentChartEvent.timestamp);
-                        const closestDiff = Math.abs(closest.timestamp - window.currentChartEvent.timestamp);
-                        return currentDiff < closestDiff ? current : closest;
-                    });
+                if (valleyIndex !== null) {
+                    // Find actual event boundaries
+                    const actualStartTime = findEventStart(data, eventIndex);
+                    const actualEndTime = findEventEnd(data, valleyIndex);
                     
-                    // Create a complete device event with duration
-                    const endEvent = {
-                        type: closestValley.type,
-                        phase: closestValley.phase,
-                        powerDelta: closestValley.powerDelta,
-                        timestamp: closestValley.timestamp,
-                        readings: closestValley.readings
+                    // Create a proper start event (not peak type, but start type)
+                    startEvent = {
+                        type: 'start', // Mark as start event, not peak
+                        phase: window.currentChartEvent.phase,
+                        powerDelta: data[eventIndex].y - data[Math.max(0, eventIndex - 1)].y, // Power change from previous point to peak
+                        timestamp: actualStartTime, // Use actual start time, not peak time
+                        readings: getCurrentReadings(actualStartTime)
                     };
                     
-                    deviceTracker.recordDeviceEvent(deviceId, window.currentChartEvent, endEvent, 'usage');
-                    showStatus(`✅ Recorded complete usage event for device (${((closestValley.timestamp - window.currentChartEvent.timestamp) / (1000 * 60)).toFixed(1)} minutes)`, 'connected');
+                    endEvent = {
+                        type: 'valley',
+                        phase: window.currentChartEvent.phase,
+                        powerDelta: data[valleyIndex].y - data[eventIndex].y, // Power change from peak to valley
+                        timestamp: actualEndTime, // Use actual end time, not valley time
+                        readings: getCurrentReadings(actualEndTime)
+                    };
+                    
+                    // Record the complete device event with proper boundaries
+                    deviceTracker.recordDeviceEvent(deviceId, startEvent, endEvent, 'usage');
+                    
+                    const durationMinutes = ((actualEndTime - actualStartTime) / (1000 * 60)).toFixed(1);
+                    showStatus(`✅ Recorded complete usage event for device (${durationMinutes} minutes)`, 'connected');
+                } else {
+                    console.log('No corresponding valley found for peak event');
                 }
-            } else if (window.currentChartEvent.type === 'valley' && window.currentChartEvent.powerDelta < -50) {
-                // Look for a corresponding peak (turn-on) event for this device
-                const associations = deviceTracker.getAssociations();
-                const recentAssociations = associations.filter(assoc => 
-                    assoc.deviceId === deviceId && 
-                    assoc.type === 'peak' && 
-                    assoc.timestamp < window.currentChartEvent.timestamp && // Before this event
-                    assoc.timestamp > window.currentChartEvent.timestamp - (8 * 60 * 60 * 1000) // Within 8 hours before
-                );
                 
-                if (recentAssociations.length > 0) {
-                    // Find the closest peak event
-                    const closestPeak = recentAssociations.reduce((closest, current) => {
-                        const currentDiff = Math.abs(current.timestamp - window.currentChartEvent.timestamp);
-                        const closestDiff = Math.abs(closest.timestamp - window.currentChartEvent.timestamp);
-                        return currentDiff < closestDiff ? current : closest;
-                    });
+            } else if (eventType === 'valley') {
+                // This is a turn-off event, find the corresponding turn-on (peak)
+                const peakIndex = findCorrespondingEvent(data, eventIndex, 'valley', 'backward');
+                
+                if (peakIndex !== null) {
+                    // Find actual event boundaries
+                    const actualStartTime = findEventStart(data, peakIndex);
+                    const actualEndTime = findEventEnd(data, eventIndex);
                     
-                    // Create a complete device event with duration
-                    const startEvent = {
-                        type: closestPeak.type,
-                        phase: closestPeak.phase,
-                        powerDelta: closestPeak.powerDelta,
-                        timestamp: closestPeak.timestamp,
-                        readings: closestPeak.readings
+                    startEvent = {
+                        type: 'start', // Mark as start event, not peak
+                        phase: window.currentChartEvent.phase,
+                        powerDelta: data[peakIndex].y - data[Math.max(0, peakIndex - 1)].y, // Power change from previous point to peak
+                        timestamp: actualStartTime, // Use actual start time, not peak time
+                        readings: getCurrentReadings(actualStartTime)
                     };
                     
-                    deviceTracker.recordDeviceEvent(deviceId, startEvent, window.currentChartEvent, 'usage');
-                    showStatus(`✅ Recorded complete usage event for device (${((window.currentChartEvent.timestamp - closestPeak.timestamp) / (1000 * 60)).toFixed(1)} minutes)`, 'connected');
+                    endEvent = {
+                        type: 'valley',
+                        phase: window.currentChartEvent.phase,
+                        powerDelta: data[valleyIndex].y - data[peakIndex].y, // Power change from peak to valley
+                        timestamp: actualEndTime, // Use actual end time, not valley time
+                        readings: getCurrentReadings(actualEndTime)
+                    };
+                    
+                    // Record the complete device event with proper boundaries
+                    deviceTracker.recordDeviceEvent(deviceId, startEvent, endEvent, 'usage');
+                    
+                    const durationMinutes = ((actualEndTime - actualStartTime) / (1000 * 60)).toFixed(1);
+                    showStatus(`✅ Recorded complete usage event for device (${durationMinutes} minutes)`, 'connected');
+                } else {
+                    console.log('No corresponding peak found for valley event');
                 }
             }
             
@@ -4312,7 +5519,8 @@
             // Refresh device annotations on charts
             refreshDeviceAnnotations();
             
-            showStatus(`✅ Associated ${window.currentChartEvent.type} event with "${deviceName}" (${(confidence * 100).toFixed(0)}% confidence)`, 'connected');
+            const currentEventType = window.currentChartEvent ? window.currentChartEvent.type : 'unknown';
+            showStatus(`✅ Associated ${currentEventType} event with "${deviceName}" (${(confidence * 100).toFixed(0)}% confidence)`, 'connected');
         }
 
         // Associate manual device from chart dialog
@@ -5120,6 +6328,11 @@
             
             // Initialize thresholds from UI
             updateThresholds();
+            
+            // Initialize device filters after a short delay to ensure DeviceTracker is ready
+            setTimeout(() => {
+                initializeDeviceFilters();
+            }, 1000);
         });
 
         // Power Consumption Thresholds Functions
@@ -5421,7 +6634,11 @@
                 return response.json();
             })
             .then(data => {
-                console.log('Consumption event saved successfully:', data);
+                if (data.replaced) {
+                    console.log(`Event replaced: old ID ${data.oldEventId} → new ID ${data.eventId}`, data.message);
+                } else {
+                    console.log('Consumption event saved successfully:', data);
+                }
             })
             .catch(error => {
                 console.error('Error saving consumption event:', error);
@@ -5500,6 +6717,859 @@
                 document.getElementById('deviceId').value = defaultDeviceId;
             }
         }
+
+        // Handle click on event start markers
+        function handleEventStartClick(deviceId, originalStartTime, clickedX, clickedY) {
+            console.log('Event start clicked:', { deviceId, originalStartTime, clickedX, clickedY });
+            
+            // Show editing dialog or enable drag mode
+            showEventStartEditDialog(deviceId, originalStartTime, clickedX, clickedY);
+        }
+        
+        // Show dialog for editing event start time
+        function showEventStartEditDialog(deviceId, originalStartTime, clickedX, clickedY) {
+            // Create dialog HTML
+            const dialogHTML = `
+                <div id="eventStartEditBackdrop" class="modal-backdrop">
+                    <div id="eventStartEditDialog" class="modal-dialog" style="max-width: 500px;">
+                        <div class="modal-header">
+                            <h3>Edit Event Start Time</h3>
+                            <button onclick="closeEventStartEditDialog()" class="close-btn">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Device:</label>
+                                <span id="editDeviceName">Loading...</span>
+                            </div>
+                            <div class="form-group">
+                                <label>Original Start Time:</label>
+                                <span id="originalStartTime">${new Date(originalStartTime).toLocaleString()}</span>
+                            </div>
+                            <div class="form-group">
+                                <label>New Start Time:</label>
+                                <input type="datetime-local" id="newStartTime" value="${formatDateTimeLocal(originalStartTime)}">
+                            </div>
+                            <div class="form-group">
+                                <label>Or click on the chart to select a new start point</label>
+                                <div class="form-note">Click anywhere on the power curve to set the new event start time</div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button onclick="updateEventStartTime('${deviceId}', ${originalStartTime})" class="btn btn-primary">Update Start Time</button>
+                            <button onclick="closeEventStartEditDialog()" class="btn btn-secondary">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing dialog if any
+            const existingDialog = document.getElementById('eventStartEditDialog');
+            if (existingDialog) existingDialog.remove();
+            const existingBackdrop = document.getElementById('eventStartEditBackdrop');
+            if (existingBackdrop) existingBackdrop.remove();
+            
+            // Add dialog to page
+            document.body.insertAdjacentHTML('beforeend', dialogHTML);
+            
+            // Load device name
+            const config = deviceTracker.getEnvironmentConfig();
+            const device = config?.devices?.find(d => d.id === deviceId);
+            document.getElementById('editDeviceName').textContent = device ? device.name : 'Unknown Device';
+            
+            // Enable chart click mode for selecting new start point
+            enableEventStartSelectionMode(deviceId, originalStartTime);
+        }
+        
+        // Enable chart click mode for selecting new event start point
+        function enableEventStartSelectionMode(deviceId, originalStartTime) {
+            // Add visual indicator that we're in selection mode
+            showStatus('Click on the chart to select a new event start point', 'info');
+            
+            // Store current selection state
+            window.eventStartSelectionMode = {
+                active: true,
+                deviceId: deviceId,
+                originalStartTime: originalStartTime
+            };
+            
+            // Add click handlers to power charts
+            ['powerAChart', 'powerBChart', 'powerCChart'].forEach(chartId => {
+                const chart = charts[chartId];
+                if (chart) {
+                    chart.canvas.style.cursor = 'crosshair';
+                    chart.canvas.addEventListener('click', handleChartClickForEventStart);
+                }
+            });
+        }
+        
+        // Handle chart click for event start selection
+        function handleChartClickForEventStart(event) {
+            if (!window.eventStartSelectionMode || !window.eventStartSelectionMode.active) return;
+            
+            const chartId = event.target.id.replace('Chart', 'Chart');
+            const chart = charts[chartId];
+            if (!chart) return;
+            
+            // Get the clicked time value
+            const canvasPosition = Chart.helpers.getRelativePosition(event, chart);
+            const newStartTime = chart.scales.x.getValueForPixel(canvasPosition.x);
+            
+            if (newStartTime) {
+                // Update the datetime input
+                document.getElementById('newStartTime').value = formatDateTimeLocal(newStartTime);
+                
+                // Visual feedback
+                showStatus(`Selected new start time: ${new Date(newStartTime).toLocaleString()}`, 'success');
+            }
+        }
+        
+        // Update event start time
+        function updateEventStartTime(deviceId, originalStartTime) {
+            const newStartTimeInput = document.getElementById('newStartTime');
+            const newStartTime = new Date(newStartTimeInput.value).getTime();
+            
+            if (!newStartTime || isNaN(newStartTime)) {
+                alert('Please select a valid start time');
+                return;
+            }
+            
+            // Find and update the device event
+            const deviceEvents = deviceTracker.deviceEvents || [];
+            const eventIndex = deviceEvents.findIndex(event => 
+                event.deviceId === deviceId && 
+                Math.abs(event.startTime - originalStartTime) < 1000 // Within 1 second
+            );
+            
+            if (eventIndex !== -1) {
+                const event = deviceEvents[eventIndex];
+                const oldDuration = event.duration;
+                
+                // Update start time and recalculate duration
+                event.startTime = newStartTime;
+                event.duration = event.endTime - newStartTime;
+                
+                // Save changes
+                deviceTracker.saveTrackingData();
+                
+                // Refresh charts
+                refreshDeviceAnnotations();
+                
+                // Close dialog
+                closeEventStartEditDialog();
+                
+                showStatus(`Event start time updated. Duration changed from ${(oldDuration / 60000).toFixed(1)} to ${(event.duration / 60000).toFixed(1)} minutes`, 'success');
+            } else {
+                alert('Could not find the event to update');
+            }
+        }
+        
+        // Close event start edit dialog
+        function closeEventStartEditDialog() {
+            const dialog = document.getElementById('eventStartEditDialog');
+            const backdrop = document.getElementById('eventStartEditBackdrop');
+            
+            if (dialog) dialog.remove();
+            if (backdrop) backdrop.remove();
+            
+            // Disable selection mode
+            if (window.eventStartSelectionMode) {
+                window.eventStartSelectionMode.active = false;
+                
+                // Remove click handlers and restore cursor
+                ['powerAChart', 'powerBChart', 'powerCChart'].forEach(chartId => {
+                    const chart = charts[chartId];
+                    if (chart) {
+                        chart.canvas.style.cursor = 'default';
+                        chart.canvas.removeEventListener('click', handleChartClickForEventStart);
+                    }
+                });
+            }
+        }
+        
+        // Helper function to format date for datetime-local input
+        function formatDateTimeLocal(timestamp) {
+            const date = new Date(timestamp);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+        
+        // Set event start from a NORMAL point
+        function setEventStart(index) {
+            console.log('Setting event start from NORMAL point at index:', index);
+            
+            const data = currentModalData.data;
+            const point = data[index];
+            
+            if (!point) {
+                console.error('No data point found at index:', index);
+                return;
+            }
+            
+            // Show device selection dialog
+            showEventStartDeviceDialog(point, index);
+        }
+        
+        // Show dialog for selecting device for event start
+        function showEventStartDeviceDialog(point, index) {
+            if (!deviceTracker) {
+                alert('Device tracker not available');
+                return;
+            }
+            
+            const config = deviceTracker.getEnvironmentConfig();
+            if (!config || !config.devices || config.devices.length === 0) {
+                alert('No devices configured. Please add devices first.');
+                return;
+            }
+            
+            // Create dialog HTML
+            const deviceOptions = config.devices.map(device => 
+                `<option value="${device.id}">${device.name}</option>`
+            ).join('');
+            
+            const dialogHTML = `
+                <div id="eventStartDeviceBackdrop" class="modal-backdrop">
+                    <div id="eventStartDeviceDialog" class="modal-dialog" style="max-width: 500px;">
+                        <div class="modal-header">
+                            <h3>Set Event Start</h3>
+                            <button onclick="closeEventStartDeviceDialog()" class="close-btn">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Time:</label>
+                                <span>${new Date(point.x).toLocaleString()}</span>
+                            </div>
+                            <div class="form-group">
+                                <label>Power:</label>
+                                <span>${point.y.toFixed(2)} W</span>
+                            </div>
+                            <div class="form-group">
+                                <label>Phase:</label>
+                                <span>${currentModalData.phase}</span>
+                            </div>
+                            <div class="form-group">
+                                <label>Select Device:</label>
+                                <select id="eventStartDeviceSelect" class="form-control">
+                                    <option value="">-- Select Device --</option>
+                                    ${deviceOptions}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button onclick="createEventStart(${index})" class="btn btn-primary">Create Event Start</button>
+                            <button onclick="closeEventStartDeviceDialog()" class="btn btn-secondary">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing dialog if any
+            const existingDialog = document.getElementById('eventStartDeviceDialog');
+            if (existingDialog) existingDialog.remove();
+            const existingBackdrop = document.getElementById('eventStartDeviceBackdrop');
+            if (existingBackdrop) existingBackdrop.remove();
+            
+            // Add dialog to page
+            document.body.insertAdjacentHTML('beforeend', dialogHTML);
+        }
+        
+        // Create event start from selected device
+        function createEventStart(index) {
+            const deviceSelect = document.getElementById('eventStartDeviceSelect');
+            const deviceId = deviceSelect.value;
+            
+            if (!deviceId) {
+                alert('Please select a device');
+                return;
+            }
+            
+            const data = currentModalData.data;
+            const point = data[index];
+            
+            if (!point) {
+                console.error('No data point found at index:', index);
+                return;
+            }
+            
+            // Create event start
+            const startEvent = {
+                type: 'start',
+                phase: currentModalData.phase,
+                powerDelta: 0, // No power change for manual start
+                timestamp: point.x,
+                readings: getCurrentReadings(point.x)
+            };
+            
+            // Record the device association (this is what makes it show up in the UI)
+            deviceTracker.recordDeviceAssociation(startEvent, deviceId, 1.0);
+            
+            // Record the event start (without end event for now)
+            deviceTracker.recordDeviceEvent(deviceId, startEvent, null, 'manual_start');
+            
+            // Save and refresh
+            deviceTracker.saveTrackingData();
+            refreshDeviceAnnotations();
+            
+            // Refresh the table to show the new association
+            if (currentModalData) {
+                populateRecordsTableWithTracking(
+                    currentModalData.data, 
+                    currentModalData.peaks, 
+                    currentModalData.valleys, 
+                    currentModalData.unit
+                );
+            }
+            
+            // Close dialog
+            closeEventStartDeviceDialog();
+            
+            // Get device name for feedback
+            const config = deviceTracker.getEnvironmentConfig();
+            const device = config?.devices?.find(d => d.id === deviceId);
+            const deviceName = device ? device.name : 'Unknown Device';
+            
+            showStatus(`✅ Created event start for ${deviceName} at ${new Date(point.x).toLocaleTimeString()}`, 'success');
+        }
+        
+        // Close event start device dialog
+        function closeEventStartDeviceDialog() {
+            const dialog = document.getElementById('eventStartDeviceDialog');
+            const backdrop = document.getElementById('eventStartDeviceBackdrop');
+            
+            if (dialog) dialog.remove();
+            if (backdrop) backdrop.remove();
+        }
+        
+        // Complete a manual start event when a valley is associated
+        function completeManualStartEvent(deviceId, valleyEvent) {
+            if (!deviceTracker) return;
+            
+            console.log('Looking for manual start event to complete for device:', deviceId);
+            
+            // Find manual start events for this device that don't have an end time
+            const deviceEvents = deviceTracker.deviceEvents || [];
+            const manualStarts = deviceEvents.filter(event => 
+                event.deviceId === deviceId && 
+                event.eventType === 'manual_start' && 
+                event.endTime === null &&
+                event.phase === valleyEvent.phase
+            );
+            
+            if (manualStarts.length === 0) {
+                console.log('No manual start events found for device:', deviceId);
+                return;
+            }
+            
+            // Find the most recent manual start before this valley
+            const recentManualStart = manualStarts
+                .filter(start => start.startTime < valleyEvent.timestamp)
+                .sort((a, b) => b.startTime - a.startTime)[0];
+            
+            if (!recentManualStart) {
+                console.log('No manual start event found before valley for device:', deviceId);
+                return;
+            }
+            
+            console.log('Found manual start event to complete:', recentManualStart);
+            
+            // Update the manual start event to include the end time
+            recentManualStart.endTime = valleyEvent.timestamp;
+            recentManualStart.duration = valleyEvent.timestamp - recentManualStart.startTime;
+            recentManualStart.eventType = 'usage'; // Change from manual_start to usage
+            recentManualStart.source = 'manual_completed';
+            
+            // Save the updated event
+            deviceTracker.saveTrackingData();
+            
+            console.log(`✅ Completed manual start event with valley. Duration: ${(recentManualStart.duration / 60000).toFixed(1)} minutes`);
+        }
+        
+        // Handle click on event end markers
+        function handleEventEndClick(deviceId, originalEndTime, clickedX, clickedY) {
+            console.log('Event end clicked:', { deviceId, originalEndTime, clickedX, clickedY });
+            
+            // Show editing dialog for end time
+            showEventEndEditDialog(deviceId, originalEndTime, clickedX, clickedY);
+        }
+        
+        // Show dialog for editing event end time
+        function showEventEndEditDialog(deviceId, originalEndTime, clickedX, clickedY) {
+            // Create dialog HTML
+            const dialogHTML = `
+                <div id="eventEndEditBackdrop" class="modal-backdrop">
+                    <div id="eventEndEditDialog" class="modal-dialog" style="max-width: 500px;">
+                        <div class="modal-header">
+                            <h3>Edit Event End Time</h3>
+                            <button onclick="closeEventEndEditDialog()" class="close-btn">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Device:</label>
+                                <span id="editEndDeviceName">Loading...</span>
+                            </div>
+                            <div class="form-group">
+                                <label>Original End Time:</label>
+                                <span id="originalEndTime">${new Date(originalEndTime).toLocaleString()}</span>
+                            </div>
+                            <div class="form-group">
+                                <label>New End Time:</label>
+                                <input type="datetime-local" id="newEndTime" value="${formatDateTimeLocal(originalEndTime)}">
+                            </div>
+                            <div class="form-group">
+                                <label>Or click on the chart to select a new end point</label>
+                                <div class="form-note">Click anywhere on the power curve to set the new event end time</div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button onclick="updateEventEndTime('${deviceId}', ${originalEndTime})" class="btn btn-primary">Update End Time</button>
+                            <button onclick="closeEventEndEditDialog()" class="btn btn-secondary">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing dialog if any
+            const existingDialog = document.getElementById('eventEndEditDialog');
+            if (existingDialog) existingDialog.remove();
+            const existingBackdrop = document.getElementById('eventEndEditBackdrop');
+            if (existingBackdrop) existingBackdrop.remove();
+            
+            // Add dialog to page
+            document.body.insertAdjacentHTML('beforeend', dialogHTML);
+            
+            // Load device name
+            const config = deviceTracker.getEnvironmentConfig();
+            const device = config?.devices?.find(d => d.id === deviceId);
+            document.getElementById('editEndDeviceName').textContent = device ? device.name : 'Unknown Device';
+            
+            // Enable chart click mode for selecting new end point
+            enableEventEndSelectionMode(deviceId, originalEndTime);
+        }
+        
+        // Enable chart click mode for selecting new event end point
+        function enableEventEndSelectionMode(deviceId, originalEndTime) {
+            // Add visual indicator that we're in selection mode
+            showStatus('Click on the chart to select a new event end point', 'info');
+            
+            // Store current selection state
+            window.eventEndSelectionMode = {
+                active: true,
+                deviceId: deviceId,
+                originalEndTime: originalEndTime
+            };
+            
+            // Add click handlers to power charts
+            ['powerAChart', 'powerBChart', 'powerCChart'].forEach(chartId => {
+                const chart = charts[chartId];
+                if (chart) {
+                    chart.canvas.style.cursor = 'crosshair';
+                    chart.canvas.addEventListener('click', handleChartClickForEventEnd);
+                }
+            });
+        }
+        
+        // Handle chart click for event end selection
+        function handleChartClickForEventEnd(event) {
+            if (!window.eventEndSelectionMode || !window.eventEndSelectionMode.active) return;
+            
+            const chartId = event.target.id.replace('Chart', 'Chart');
+            const chart = charts[chartId];
+            if (!chart) return;
+            
+            // Get the clicked time value
+            const canvasPosition = Chart.helpers.getRelativePosition(event, chart);
+            const newEndTime = chart.scales.x.getValueForPixel(canvasPosition.x);
+            
+            if (newEndTime) {
+                // Update the datetime input
+                document.getElementById('newEndTime').value = formatDateTimeLocal(newEndTime);
+                
+                // Visual feedback
+                showStatus(`Selected new end time: ${new Date(newEndTime).toLocaleString()}`, 'success');
+            }
+        }
+        
+        // Update event end time
+        function updateEventEndTime(deviceId, originalEndTime) {
+            const newEndTimeInput = document.getElementById('newEndTime');
+            const newEndTime = new Date(newEndTimeInput.value).getTime();
+            
+            if (!newEndTime || isNaN(newEndTime)) {
+                alert('Please select a valid end time');
+                return;
+            }
+            
+            // Find and update the device event
+            const deviceEvents = deviceTracker.deviceEvents || [];
+            const eventIndex = deviceEvents.findIndex(event => 
+                event.deviceId === deviceId && 
+                Math.abs(event.endTime - originalEndTime) < 1000 // Within 1 second
+            );
+            
+            if (eventIndex !== -1) {
+                const event = deviceEvents[eventIndex];
+                const oldDuration = event.duration;
+                
+                // Update end time and recalculate duration
+                event.endTime = newEndTime;
+                event.duration = newEndTime - event.startTime;
+                
+                // Save changes
+                deviceTracker.saveTrackingData();
+                
+                // Refresh charts
+                refreshDeviceAnnotations();
+                
+                // Close dialog
+                closeEventEndEditDialog();
+                
+                showStatus(`Event end time updated. Duration changed from ${(oldDuration / 60000).toFixed(1)} to ${(event.duration / 60000).toFixed(1)} minutes`, 'success');
+            } else {
+                alert('Could not find the event to update');
+            }
+        }
+        
+        // Close event end edit dialog
+        function closeEventEndEditDialog() {
+            const dialog = document.getElementById('eventEndEditDialog');
+            const backdrop = document.getElementById('eventEndEditBackdrop');
+            
+            if (dialog) dialog.remove();
+            if (backdrop) backdrop.remove();
+            
+            // Disable selection mode
+            if (window.eventEndSelectionMode) {
+                window.eventEndSelectionMode.active = false;
+                
+                // Remove click handlers and restore cursor
+                ['powerAChart', 'powerBChart', 'powerCChart'].forEach(chartId => {
+                    const chart = charts[chartId];
+                    if (chart) {
+                        chart.canvas.style.cursor = 'default';
+                        chart.canvas.removeEventListener('click', handleChartClickForEventEnd);
+                    }
+                });
+            }
+        }
+
+        // ===== DEVICE FILTER FUNCTIONALITY =====
+        
+        // Track which devices are currently hidden
+        let hiddenDevices = new Set();
+        
+        // Initialize device filters
+        function initializeDeviceFilters() {
+            if (!deviceTracker) {
+                console.warn('DeviceTracker not available for filters');
+                return;
+            }
+            
+            const config = deviceTracker.getEnvironmentConfig();
+            if (!config || !config.devices || config.devices.length === 0) {
+                // Hide filter controls if no devices
+                document.getElementById('deviceFilterControls').style.display = 'none';
+                return;
+            }
+            
+            // Populate device filter buttons (will only show devices with events)
+            populateDeviceFilterButtons(config.devices);
+        }
+        
+        // Get devices that have events in the current graph data
+        function getDevicesWithEvents() {
+            if (!deviceTracker) return [];
+            
+            const config = deviceTracker.getEnvironmentConfig();
+            if (!config || !config.devices) return [];
+            
+            // Get all device associations from the current time range
+            const associations = deviceTracker.deviceAssociations || [];
+            const deviceEvents = deviceTracker.deviceEvents || [];
+            
+            // Get current time range from charts (if available)
+            let currentTimeRange = null;
+            const powerCharts = ['powerAChart', 'powerBChart', 'powerCChart'];
+            for (const chartId of powerCharts) {
+                if (charts[chartId] && charts[chartId].data.datasets[0].data.length > 0) {
+                    const data = charts[chartId].data.datasets[0].data;
+                    currentTimeRange = {
+                        start: data[0].x,
+                        end: data[data.length - 1].x
+                    };
+                    break;
+                }
+            }
+            
+            // If no time range available, return all devices
+            if (!currentTimeRange) {
+                return config.devices;
+            }
+            
+            // Find devices that have events in the current time range
+            const devicesWithEvents = new Set();
+            
+            // Check device associations
+            associations.forEach(assoc => {
+                if (assoc.timestamp >= currentTimeRange.start && assoc.timestamp <= currentTimeRange.end) {
+                    devicesWithEvents.add(assoc.deviceId);
+                }
+            });
+            
+            // Check device events
+            deviceEvents.forEach(event => {
+                if (event.startTime >= currentTimeRange.start && event.startTime <= currentTimeRange.end) {
+                    devicesWithEvents.add(event.deviceId);
+                }
+            });
+            
+            // Return only devices that have events in the current time range
+            return config.devices.filter(device => devicesWithEvents.has(device.id));
+        }
+        
+        // Populate device filter buttons
+        function populateDeviceFilterButtons(devices) {
+            const container = document.getElementById('deviceFilterButtons');
+            container.innerHTML = '';
+            
+            // Get only devices that have events in the current graph data
+            const devicesWithEvents = getDevicesWithEvents();
+            
+            if (devicesWithEvents.length === 0) {
+                // Hide filter controls if no devices have events
+                document.getElementById('deviceFilterControls').style.display = 'none';
+                return;
+            }
+            
+            // Show filter controls
+            document.getElementById('deviceFilterControls').style.display = 'block';
+            
+            devicesWithEvents.forEach(device => {
+                const isHidden = hiddenDevices.has(device.id);
+                const button = document.createElement('button');
+                button.className = `device-filter-btn ${isHidden ? 'hidden' : 'active'}`;
+                button.setAttribute('data-device-id', device.id);
+                button.onclick = () => toggleDeviceFilter(device.id);
+                
+                const colorIndicator = document.createElement('div');
+                colorIndicator.className = 'device-color-indicator';
+                colorIndicator.style.backgroundColor = device.color || '#cccccc';
+                
+                const deviceName = document.createElement('span');
+                deviceName.textContent = device.name;
+                
+                const statusIcon = document.createElement('span');
+                statusIcon.textContent = isHidden ? '👁️‍🗨️' : '👁️';
+                statusIcon.style.fontSize = '12px';
+                
+                button.appendChild(colorIndicator);
+                button.appendChild(deviceName);
+                button.appendChild(statusIcon);
+                
+                container.appendChild(button);
+            });
+        }
+        
+        // Toggle device filter
+        function toggleDeviceFilter(deviceId) {
+            const isHidden = hiddenDevices.has(deviceId);
+            
+            if (isHidden) {
+                hiddenDevices.delete(deviceId);
+            } else {
+                hiddenDevices.add(deviceId);
+            }
+            
+            // Update button appearance
+            updateDeviceFilterButton(deviceId);
+            
+            // Apply filter to charts
+            applyDeviceFilters();
+        }
+        
+        // Update device filter button appearance
+        function updateDeviceFilterButton(deviceId) {
+            // Update buttons in main filter area
+            const buttons = document.querySelectorAll(`[data-device-id="${deviceId}"]`);
+            
+            buttons.forEach(button => {
+                const isHidden = hiddenDevices.has(deviceId);
+                const statusIcon = button.querySelector('span:last-child');
+                
+                if (isHidden) {
+                    button.classList.remove('active');
+                    button.classList.add('hidden');
+                    statusIcon.textContent = '👁️‍🗨️';
+                } else {
+                    button.classList.remove('hidden');
+                    button.classList.add('active');
+                    statusIcon.textContent = '👁️';
+                }
+            });
+        }
+        
+        // Show all devices
+        function showAllDevices() {
+            hiddenDevices.clear();
+            
+            // Update all buttons
+            document.querySelectorAll('.device-filter-btn').forEach(button => {
+                const deviceId = button.getAttribute('data-device-id');
+                updateDeviceFilterButton(deviceId);
+            });
+            
+            // Apply filter to charts
+            applyDeviceFilters();
+        }
+        
+        // Hide all devices
+        function hideAllDevices() {
+            const config = deviceTracker?.getEnvironmentConfig();
+            if (!config || !config.devices) return;
+            
+            // Add all devices to hidden set
+            config.devices.forEach(device => {
+                hiddenDevices.add(device.id);
+            });
+            
+            // Update all buttons
+            document.querySelectorAll('.device-filter-btn').forEach(button => {
+                const deviceId = button.getAttribute('data-device-id');
+                updateDeviceFilterButton(deviceId);
+            });
+            
+            // Apply filter to charts
+            applyDeviceFilters();
+        }
+        
+        // Apply device filters to charts
+        function applyDeviceFilters() {
+            ['powerAChart', 'powerBChart', 'powerCChart'].forEach(chartId => {
+                if (charts[chartId]) {
+                    filterChartByDevices(chartId);
+                    
+                    // Force legend refresh after applying filters
+                    refreshChartLegend(chartId);
+                    charts[chartId].update('active');
+                }
+            });
+            
+            // Update status
+            const hiddenCount = hiddenDevices.size;
+            const totalCount = document.querySelectorAll('.device-filter-btn').length;
+            const visibleCount = totalCount - hiddenCount;
+            
+            showStatus(`Device filter applied: ${visibleCount}/${totalCount} devices visible`, 'connected');
+        }
+        
+        // Filter chart annotations and fills by devices
+        function filterChartByDevices(chartId) {
+            const chart = charts[chartId];
+            if (!chart || !chart.options.plugins || !chart.options.plugins.annotation) {
+                return;
+            }
+            
+            const annotations = chart.options.plugins.annotation.annotations;
+            const config = deviceTracker?.getEnvironmentConfig();
+            
+            if (!config || !config.devices) return;
+            
+            // Filter device annotations (labels)
+            Object.keys(annotations).forEach(annotationId => {
+                const annotation = annotations[annotationId];
+                
+                if (annotationId.startsWith('device_')) {
+                    // Find which device this annotation belongs to
+                    const deviceName = annotation.content;
+                    const device = config.devices.find(d => d.name === deviceName || deviceName.includes(d.name));
+                    
+                    if (device && hiddenDevices.has(device.id)) {
+                        annotation.display = false;
+                    } else {
+                        annotation.display = true;
+                    }
+                }
+                
+                // Filter event start/end markers
+                if (annotationId.startsWith('event_start_') || annotationId.startsWith('event_end_')) {
+                    // Get the event index from annotation ID
+                    const eventIndex = parseInt(annotationId.split('_')[2]);
+                    const phase = chartId.includes('A') ? 'A' : chartId.includes('B') ? 'B' : 'C';
+                    
+                    // Get device events for this phase
+                    const deviceEvents = deviceTracker.deviceEvents || [];
+                    const phaseEvents = deviceEvents.filter(event => 
+                        event.phase === phase && 
+                        event.startTime && 
+                        event.endTime && 
+                        event.deviceId
+                    );
+                    
+                    if (phaseEvents[eventIndex]) {
+                        const event = phaseEvents[eventIndex];
+                        if (hiddenDevices.has(event.deviceId)) {
+                            annotation.display = false;
+                        } else {
+                            annotation.display = true;
+                        }
+                    }
+                }
+            });
+            
+            // Filter chart datasets (curve fills)
+            if (chart.data.datasets.length > 2) { // Has device event fills
+                chart.data.datasets.forEach((dataset, index) => {
+                    if (index > 1 && dataset.deviceId) { // Skip main data and interpolated curve
+                        if (hiddenDevices.has(dataset.deviceId)) {
+                            dataset.hidden = true;
+                        } else {
+                            dataset.hidden = false;
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Refresh device filters when data changes
+        function refreshDeviceFilters() {
+            // Re-initialize filters with current device list
+            initializeDeviceFilters();
+            
+            // Re-apply current filter state
+            applyDeviceFilters();
+            
+            // Update status to show how many devices have events
+            const devicesWithEvents = getDevicesWithEvents();
+            if (devicesWithEvents.length > 0) {
+                showStatus(`Device filters updated: ${devicesWithEvents.length} device(s) with events in current time range`, 'connected');
+            } else {
+                showStatus('No devices with events found in current time range', 'info');
+            }
+        }
+        
+        // Call initialize device filters when the page loads and when device tracking is ready
+        let deviceFilterInitialized = false;
+        
+        // Override the existing refreshDeviceAnnotations function to include filter refresh
+        const originalRefreshDeviceAnnotations = refreshDeviceAnnotations;
+        refreshDeviceAnnotations = function() {
+            originalRefreshDeviceAnnotations();
+            
+            // Initialize filters if not done yet
+            if (!deviceFilterInitialized) {
+                setTimeout(() => {
+                    initializeDeviceFilters();
+                    deviceFilterInitialized = true;
+                }, 100);
+            } else {
+                // Just refresh the filter state
+                applyDeviceFilters();
+            }
+        };
     </script>
 </body>
 </html> 

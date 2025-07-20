@@ -97,7 +97,7 @@ class DeviceTracker {
     /**
      * Analyze a power event and suggest possible devices
      * @param {Object} event - Power event data
-     * @param {string} event.type - 'peak' or 'valley'
+     * @param {string} event.type - 'peak', 'valley', or 'start'
      * @param {string} event.phase - 'A', 'B', or 'C'
      * @param {number} event.powerDelta - Change in power (watts)
      * @param {number} event.timestamp - Event timestamp
@@ -480,7 +480,7 @@ class DeviceTracker {
         const deviceEvent = {
             id: Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9),
             deviceId: deviceId,
-            eventType: eventType, // 'usage', 'standby', 'peak'
+            eventType: eventType, // 'usage', 'standby', 'peak', 'manual_start'
             startTime: startEvent.timestamp,
             endTime: endEvent ? endEvent.timestamp : null,
             duration: endEvent ? (endEvent.timestamp - startEvent.timestamp) : null,
@@ -491,7 +491,7 @@ class DeviceTracker {
             averagePower: this.calculateAveragePower(startEvent, endEvent),
             totalConsumption: this.calculateTotalConsumption(startEvent, endEvent),
             confidence: 1.0,
-            source: 'manual',
+            source: eventType === 'manual_start' ? 'manual_start' : 'manual',
             startReadings: startEvent.readings,
             endReadings: endEvent ? endEvent.readings : null,
             patternAnalysis: {
@@ -684,7 +684,7 @@ class DeviceTracker {
             let reasoning = [];
 
             // Power magnitude matching
-            const expectedPower = event.type === 'peak' ? device.peakPower : device.averagePower;
+            const expectedPower = (event.type === 'peak' || event.type === 'start') ? device.peakPower : device.averagePower;
             const powerDiff = Math.abs(powerDelta - expectedPower);
             const powerRatio = Math.min(powerDelta, expectedPower) / Math.max(powerDelta, expectedPower);
             
@@ -866,7 +866,7 @@ class DeviceTracker {
         }
 
         const powerDelta = Math.abs(event.powerDelta);
-        const range = event.type === 'peak' ? pattern.peakRange : pattern.valleyRange;
+        const range = (event.type === 'peak' || event.type === 'start') ? pattern.peakRange : pattern.valleyRange;
         
         let score = 0;
         let reasoning = null;
@@ -937,8 +937,8 @@ class DeviceTracker {
             return { score: 0, reasoning: null };
         }
 
-        // Look for complementary events (peak followed by valley or vice versa)
-        const complementaryType = event.type === 'peak' ? 'valley' : 'peak';
+        // Look for complementary events (peak/start followed by valley or vice versa)
+        const complementaryType = (event.type === 'peak' || event.type === 'start') ? 'valley' : 'peak';
         const complementaryEvent = recentEvents.find(e => e.type === complementaryType);
 
         if (complementaryEvent) {
@@ -1035,6 +1035,232 @@ class DeviceTracker {
         });
 
         return association;
+    }
+
+    /**
+     * Remove device association for a specific event
+     * @param {Object} event - Power event data
+     * @param {number} event.timestamp - Event timestamp
+     * @param {string} event.phase - Phase (A, B, or C)
+     * @param {string} event.type - Event type (peak, valley, or start)
+     * @returns {boolean} True if association was removed, false if not found
+     */
+    removeDeviceAssociation(event) {
+        const timeWindow = 5000; // 5 seconds window
+        
+        // Find the association to remove
+        const associationIndex = this.deviceAssociations.findIndex(assoc => {
+            return Math.abs(assoc.timestamp - event.timestamp) <= timeWindow &&
+                   assoc.phase === event.phase &&
+                   (assoc.type === event.type || assoc.type === 'start');
+        });
+        
+        if (associationIndex === -1) {
+            console.log('No device association found to remove');
+            return false;
+        }
+        
+        const removedAssociation = this.deviceAssociations[associationIndex];
+        console.log('Removing device association:', removedAssociation);
+        
+        // Remove the association
+        this.deviceAssociations.splice(associationIndex, 1);
+        
+        // Also remove from learning data
+        const learningDataIndex = this.learningData.findIndex(data => 
+            Math.abs(data.timestamp - event.timestamp) <= timeWindow &&
+            data.phase === event.phase &&
+            (data.type === event.type || data.type === 'start')
+        );
+        
+        if (learningDataIndex !== -1) {
+            this.learningData.splice(learningDataIndex, 1);
+        }
+        
+        // Save the updated data
+        this.saveTrackingData();
+        
+        return true;
+    }
+
+    /**
+     * Remove all device associations for the same event (start and end points)
+     * @param {Object} event - Power event data
+     * @param {number} event.timestamp - Event timestamp
+     * @param {string} event.phase - Phase (A, B, or C)
+     * @param {string} event.type - Event type (peak, valley, or start)
+     * @returns {number} Number of associations removed
+     */
+    removeAllEventAssociations(event) {
+        const timeWindow = 30000; // 30 seconds window to catch related start/end events
+        const deviceId = this.getDeviceIdForEvent(event);
+        
+        if (!deviceId) {
+            console.log('No device ID found for event');
+            return 0;
+        }
+        
+        console.log(`Removing all associations for device ${deviceId} in time window around ${new Date(event.timestamp).toLocaleTimeString()}`);
+        
+        // Find all associations for this device in the time window
+        const associationsToRemove = this.deviceAssociations.filter(assoc => {
+            return Math.abs(assoc.timestamp - event.timestamp) <= timeWindow &&
+                   assoc.phase === event.phase &&
+                   assoc.deviceId === deviceId;
+        });
+        
+        if (associationsToRemove.length === 0) {
+            console.log('No associations found to remove');
+            return 0;
+        }
+        
+        console.log(`Found ${associationsToRemove.length} associations to remove:`, associationsToRemove);
+        
+        // Remove all matching associations
+        this.deviceAssociations = this.deviceAssociations.filter(assoc => {
+            return !(Math.abs(assoc.timestamp - event.timestamp) <= timeWindow &&
+                     assoc.phase === event.phase &&
+                     assoc.deviceId === deviceId);
+        });
+        
+        // Also remove from learning data
+        this.learningData = this.learningData.filter(data => {
+            return !(Math.abs(data.timestamp - event.timestamp) <= timeWindow &&
+                     data.phase === event.phase &&
+                     data.deviceId === deviceId);
+        });
+        
+        // Remove corresponding device events that create Event Role values
+        this.removeDeviceEventsForEvent(event, deviceId);
+        
+        // Save the updated data
+        this.saveTrackingData();
+        
+        console.log(`Removed ${associationsToRemove.length} associations for device ${deviceId}`);
+        return associationsToRemove.length;
+    }
+    
+    /**
+     * Remove device events that create Event Role values for a specific event
+     * @param {Object} event - Power event data
+     * @param {string} deviceId - Device ID to remove events for
+     */
+    removeDeviceEventsForEvent(event, deviceId) {
+        console.log('Removing device events for event:', event, 'deviceId:', deviceId);
+        
+        const timeWindow = 30000; // 30 seconds window
+        const eventTimestamp = event.timestamp;
+        const eventPhase = event.phase;
+        
+        // Find device events that overlap with this event's time window
+        const matchingEvents = this.deviceEvents.filter(deviceEvent => {
+            const timeOverlap = Math.abs(deviceEvent.startTime - eventTimestamp) <= timeWindow ||
+                               Math.abs(deviceEvent.endTime - eventTimestamp) <= timeWindow;
+            const phaseMatch = deviceEvent.phase === eventPhase;
+            const deviceMatch = deviceEvent.deviceId === deviceId;
+            
+            return timeOverlap && phaseMatch && deviceMatch;
+        });
+        
+        console.log(`Found ${matchingEvents.length} device events to remove:`, matchingEvents);
+        
+        // Remove matching device events
+        matchingEvents.forEach(deviceEvent => {
+            const index = this.deviceEvents.indexOf(deviceEvent);
+            if (index > -1) {
+                this.deviceEvents.splice(index, 1);
+                console.log(`Removed device event: ${deviceEvent.deviceId} at ${new Date(deviceEvent.startTime).toLocaleTimeString()}`);
+            }
+        });
+    }
+
+    /**
+     * Get device ID for a specific event
+     * @param {Object} event - Power event data
+     * @returns {string|null} Device ID or null if not found
+     */
+    getDeviceIdForEvent(event) {
+        const timeWindow = 5000; // 5 seconds window
+        
+        console.log('Looking for device ID for event:', {
+            timestamp: new Date(event.timestamp).toLocaleTimeString(),
+            phase: event.phase,
+            type: event.type,
+            powerDelta: event.powerDelta
+        });
+        
+        console.log('Available associations (showing only those with matching timestamp):');
+        const matchingTimeAssociations = this.deviceAssociations.filter(assoc => 
+            Math.abs(assoc.timestamp - event.timestamp) <= 5000
+        );
+        matchingTimeAssociations.forEach((assoc, index) => {
+            console.log(`Association ${index + 1}:`, {
+                timestamp: new Date(assoc.timestamp).toLocaleTimeString(),
+                phase: assoc.phase,
+                type: assoc.type,
+                deviceId: assoc.deviceId,
+                powerDelta: assoc.powerDelta
+            });
+        });
+        
+        const association = this.deviceAssociations.find(assoc => {
+            const timeMatch = Math.abs(assoc.timestamp - event.timestamp) <= timeWindow;
+            const phaseMatch = assoc.phase === event.phase;
+            const typeMatch = assoc.type === event.type || event.type === 'start';
+            
+            // Only log detailed info for associations that match time and phase
+            if (timeMatch && phaseMatch) {
+                console.log('Checking association (time and phase match):', {
+                    assocTimestamp: new Date(assoc.timestamp).toLocaleTimeString(),
+                    eventTimestamp: new Date(event.timestamp).toLocaleTimeString(),
+                    timeDiff: Math.abs(assoc.timestamp - event.timestamp),
+                    timeMatch,
+                    phaseMatch,
+                    typeMatch,
+                    assocPhase: assoc.phase,
+                    eventPhase: event.phase,
+                    assocType: assoc.type,
+                    eventType: event.type,
+                    assocPowerDelta: assoc.powerDelta,
+                    eventPowerDelta: event.powerDelta,
+                    typeComparison: `${assoc.type} === ${event.type} || ${event.type} === 'start'`
+                });
+            }
+            
+            return timeMatch && phaseMatch && typeMatch;
+        });
+        
+        if (association) {
+            console.log('Found matching association:', association);
+            return association.deviceId;
+        } else {
+            console.log('No matching association found');
+            return null;
+        }
+    }
+
+    /**
+     * Remove all device associations for a specific device
+     * @param {string} deviceId - Device ID to remove associations for
+     * @returns {number} Number of associations removed
+     */
+    removeAllDeviceAssociations(deviceId) {
+        const initialCount = this.deviceAssociations.length;
+        
+        // Remove all associations for this device
+        this.deviceAssociations = this.deviceAssociations.filter(assoc => assoc.deviceId !== deviceId);
+        
+        // Also remove from learning data
+        this.learningData = this.learningData.filter(data => data.deviceId !== deviceId);
+        
+        const removedCount = initialCount - this.deviceAssociations.length;
+        
+        if (removedCount > 0) {
+            console.log(`Removed ${removedCount} device associations for device ${deviceId}`);
+            this.saveTrackingData();
+        }
+        
+        return removedCount;
     }
 
     /**

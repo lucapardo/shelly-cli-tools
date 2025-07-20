@@ -72,24 +72,41 @@ for (const [eventKey, event] of activeEvents.entries()) {
 
 console.log(`✅ Analysis complete! Generated ${completedEvents.length} consumption events`);
 
-// Statistiche
-const stats = completedEvents.reduce((acc, event) => {
+// Statistiche per i nuovi eventi
+const newStats = completedEvents.reduce((acc, event) => {
     acc[event.type] = (acc[event.type] || 0) + 1;
     return acc;
 }, {});
 
-console.log('📊 Event Statistics:');
-console.log(`   Low consumption events: ${stats.LOW || 0}`);
-console.log(`   Medium consumption events: ${stats.MEDIUM || 0}`);
-console.log(`   High consumption events: ${stats.HIGH || 0}`);
+console.log('📊 New Event Statistics:');
+console.log(`   Low consumption events: ${newStats.LOW || 0}`);
+console.log(`   Medium consumption events: ${newStats.MEDIUM || 0}`);
+console.log(`   High consumption events: ${newStats.HIGH || 0}`);
+
+// Statistiche per gli eventi sostituiti
+if (replacedCount > 0) {
+    console.log(`🔄 Replaced ${replacedCount} existing events`);
+}
+
+// Statistiche totali (esistenti + nuovi)
+const totalStats = localStorageData.reduce((acc, event) => {
+    acc[event.type] = (acc[event.type] || 0) + 1;
+    return acc;
+}, {});
+
+console.log('📊 Total Event Statistics:');
+console.log(`   Low consumption events: ${totalStats.LOW || 0}`);
+console.log(`   Medium consumption events: ${totalStats.MEDIUM || 0}`);
+console.log(`   High consumption events: ${totalStats.HIGH || 0}`);
 
 // Salva gli eventi in formato JSON
 const outputData = {
     generatedAt: new Date().toISOString(),
     thresholds: powerThresholds,
-    totalEvents: completedEvents.length,
-    statistics: stats,
-    events: completedEvents
+    totalEvents: localStorageData.length,
+    newEvents: completedEvents.length,
+    statistics: totalStats,
+    events: localStorageData
 };
 
 const outputPath = path.join(__dirname, 'generated_consumption_events.json');
@@ -97,10 +114,60 @@ fs.writeFileSync(outputPath, JSON.stringify(outputData, null, 2));
 console.log(`💾 Events saved to: ${outputPath}`);
 
 // Salva anche in formato compatibile con localStorage
-const localStorageData = completedEvents;
+// Controlla se esistono già eventi nel file e evita duplicati
 const localStoragePath = path.join(__dirname, 'consumption_events_for_browser.json');
+let existingEvents = [];
+
+if (fs.existsSync(localStoragePath)) {
+    try {
+        const existingData = fs.readFileSync(localStoragePath, 'utf8');
+        existingEvents = JSON.parse(existingData);
+        console.log(`📁 Found ${existingEvents.length} existing events in file`);
+    } catch (parseError) {
+        console.warn('⚠️  Error parsing existing events file, starting fresh:', parseError.message);
+        existingEvents = [];
+    }
+}
+
+// Sostituisci eventi esistenti con quelli nuovi per lo stesso intervallo temporale
+let replacedCount = 0;
+const finalEvents = [...existingEvents]; // Copia eventi esistenti
+
+completedEvents.forEach(newEvent => {
+    const existingIndex = finalEvents.findIndex(existingEvent => 
+        existingEvent.phase === newEvent.phase &&
+        existingEvent.startTime === newEvent.startTime &&
+        existingEvent.endTime === newEvent.endTime
+    );
+    
+    if (existingIndex !== -1) {
+        // Sostituisci l'evento esistente
+        const oldEvent = finalEvents[existingIndex];
+        finalEvents[existingIndex] = newEvent;
+        replacedCount++;
+        console.log(`🔄 Replaced event ${oldEvent.id} with new event ${newEvent.id} for phase ${newEvent.phase}`);
+    } else {
+        // Aggiungi nuovo evento
+        finalEvents.push(newEvent);
+    }
+});
+
+if (replacedCount > 0) {
+    console.log(`🔄 Replaced ${replacedCount} existing events`);
+}
+
+const localStorageData = finalEvents;
+
+// Genera ID univoci per i nuovi eventi se necessario
+let maxExistingId = existingEvents.length > 0 ? Math.max(...existingEvents.map(e => parseInt(e.id) || 0)) : 0;
+newEvents.forEach((event, index) => {
+    if (parseInt(event.id) <= maxExistingId) {
+        event.id = maxExistingId + index + 1;
+    }
+});
+
 fs.writeFileSync(localStoragePath, JSON.stringify(localStorageData, null, 2));
-console.log(`🌐 Browser-compatible events saved to: ${localStoragePath}`);
+console.log(`🌐 Browser-compatible events saved to: ${localStoragePath} (${localStorageData.length} total events)`);
 
 // Funzioni di elaborazione eventi
 function processPhaseEvent(phase, power, timestamp) {

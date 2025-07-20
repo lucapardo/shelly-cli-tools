@@ -588,10 +588,24 @@ async function handleSaveConsumptionEvent(req, res) {
     const body = await getRequestBody(req);
     const eventData = JSON.parse(body);
     
+    // Check if this is a clear request
+    if (eventData.clear === true) {
+      const eventsPath = join(__dirname, 'consumption_events_for_browser.json');
+      writeFileSync(eventsPath, JSON.stringify([], null, 2));
+      console.log('Cleared all consumption events');
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: true, 
+        message: 'All events cleared successfully',
+        totalEvents: 0
+      }));
+      return;
+    }
+    
     // Validate event data
-    if (!eventData.id || !eventData.phase || !eventData.type) {
+    if (!eventData.id || !eventData.phase || !eventData.type || !eventData.startTime || !eventData.endTime) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Invalid event data' }));
+      res.end(JSON.stringify({ error: 'Invalid event data - missing required fields' }));
       return;
     }
     
@@ -609,6 +623,41 @@ async function handleSaveConsumptionEvent(req, res) {
       }
     }
     
+    // Check for existing event in the same time interval and phase
+    const existingEventIndex = existingEvents.findIndex(existingEvent => 
+      existingEvent.phase === eventData.phase &&
+      existingEvent.startTime === eventData.startTime &&
+      existingEvent.endTime === eventData.endTime
+    );
+    
+    if (existingEventIndex !== -1) {
+      // Replace the existing event with the new one
+      const oldEvent = existingEvents[existingEventIndex];
+      existingEvents[existingEventIndex] = eventData;
+      
+      console.log(`Replaced existing event ${oldEvent.id} with new event ${eventData.id} for phase ${eventData.phase} (${eventData.startTime} - ${eventData.endTime})`);
+      
+      // Save updated events
+      writeFileSync(eventsPath, JSON.stringify(existingEvents, null, 2));
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: true, 
+        message: 'Event replaced successfully',
+        eventId: eventData.id,
+        oldEventId: oldEvent.id,
+        totalEvents: existingEvents.length,
+        replaced: true
+      }));
+      return;
+    }
+    
+    // Generate a unique ID if the current one might conflict
+    const maxExistingId = existingEvents.length > 0 ? Math.max(...existingEvents.map(e => parseInt(e.id) || 0)) : 0;
+    if (parseInt(eventData.id) <= maxExistingId) {
+      eventData.id = maxExistingId + 1;
+    }
+    
     // Add new event
     existingEvents.push(eventData);
     
@@ -622,7 +671,8 @@ async function handleSaveConsumptionEvent(req, res) {
       success: true, 
       message: 'Event saved successfully',
       eventId: eventData.id,
-      totalEvents: existingEvents.length
+      totalEvents: existingEvents.length,
+      duplicate: false
     }));
     
   } catch (error) {
