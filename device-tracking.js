@@ -8,7 +8,6 @@
 class DeviceTracker {
     constructor() {
         this.eventHistory = [];
-        this.deviceAssociations = [];
         this.learningData = [];
         this.confidenceThreshold = 0.7;
         this.timeWindowMs = 5000; // 5 seconds window for event correlation
@@ -39,7 +38,6 @@ class DeviceTracker {
                 
                 // Load tracking data from the config manager
                 const trackingData = this.configManager.getTrackingData();
-                this.deviceAssociations = trackingData.deviceAssociations || [];
                 this.learningData = trackingData.learningData || [];
                 this.eventHistory = trackingData.eventHistory || [];
                 this.deviceEvents = trackingData.deviceEvents || [];
@@ -58,6 +56,9 @@ class DeviceTracker {
             // Fallback to old localStorage method
             this.loadTrackingData();
         }
+        
+        // Removed: migrateToUnifiedEvents (no longer needed)
+        // await this.migrateToUnifiedEvents();
         
         // Load appliances data once at initialization
         await this.loadAppliancesData();
@@ -961,25 +962,8 @@ class DeviceTracker {
         const matches = [];
         const powerTolerance = 50; // 50W tolerance
         
-        this.deviceAssociations.forEach(association => {
-            if (association.phase === event.phase && 
-                association.type === event.type &&
-                Math.abs(association.powerDelta - event.powerDelta) <= powerTolerance) {
-                
-                const existingMatch = matches.find(m => m.deviceId === association.deviceId);
-                if (existingMatch) {
-                    existingMatch.occurrences++;
-                    existingMatch.confidence = Math.min(existingMatch.confidence + 0.1, 0.9);
-                } else {
-                    matches.push({
-                        deviceId: association.deviceId,
-                        occurrences: 1,
-                        confidence: 0.5
-                    });
-                }
-            }
-        });
-
+        // Removed: deviceAssociations is no longer used
+        
         return matches.sort((a, b) => b.confidence - a.confidence);
     }
 
@@ -1010,34 +994,6 @@ class DeviceTracker {
     }
 
     /**
-     * Record manual device association
-     */
-    recordDeviceAssociation(event, deviceId, confidence = 1.0) {
-        const association = {
-            id: Date.now().toString(),
-            timestamp: event.timestamp,
-            phase: event.phase,
-            type: event.type,
-            powerDelta: event.powerDelta,
-            deviceId: deviceId,
-            confidence: confidence,
-            source: 'manual',
-            readings: event.readings
-        };
-
-        this.deviceAssociations.push(association);
-        this.saveTrackingData();
-        
-        // Add to learning data for future AI training
-        this.learningData.push({
-            ...association,
-            features: this.extractFeatures(event)
-        });
-
-        return association;
-    }
-
-    /**
      * Remove device association for a specific event
      * @param {Object} event - Power event data
      * @param {number} event.timestamp - Event timestamp
@@ -1049,7 +1005,7 @@ class DeviceTracker {
         const timeWindow = 5000; // 5 seconds window
         
         // Find the association to remove
-        const associationIndex = this.deviceAssociations.findIndex(assoc => {
+        const associationIndex = this.deviceEvents.findIndex(assoc => {
             return Math.abs(assoc.timestamp - event.timestamp) <= timeWindow &&
                    assoc.phase === event.phase &&
                    (assoc.type === event.type || assoc.type === 'start');
@@ -1060,11 +1016,11 @@ class DeviceTracker {
             return false;
         }
         
-        const removedAssociation = this.deviceAssociations[associationIndex];
+        const removedAssociation = this.deviceEvents[associationIndex];
         console.log('Removing device association:', removedAssociation);
         
         // Remove the association
-        this.deviceAssociations.splice(associationIndex, 1);
+        this.deviceEvents.splice(associationIndex, 1);
         
         // Also remove from learning data
         const learningDataIndex = this.learningData.findIndex(data => 
@@ -1084,7 +1040,7 @@ class DeviceTracker {
     }
 
     /**
-     * Remove all device associations for the same event (start and end points)
+     * Remove all device associations for the same unified event
      * @param {Object} event - Power event data
      * @param {number} event.timestamp - Event timestamp
      * @param {string} event.phase - Phase (A, B, or C)
@@ -1092,52 +1048,219 @@ class DeviceTracker {
      * @returns {number} Number of associations removed
      */
     removeAllEventAssociations(event) {
-        const timeWindow = 30000; // 30 seconds window to catch related start/end events
-        const deviceId = this.getDeviceIdForEvent(event);
-        
-        if (!deviceId) {
-            console.log('No device ID found for event');
-            return 0;
-        }
-        
-        console.log(`Removing all associations for device ${deviceId} in time window around ${new Date(event.timestamp).toLocaleTimeString()}`);
-        
-        // Find all associations for this device in the time window
-        const associationsToRemove = this.deviceAssociations.filter(assoc => {
-            return Math.abs(assoc.timestamp - event.timestamp) <= timeWindow &&
-                   assoc.phase === event.phase &&
-                   assoc.deviceId === deviceId;
+        // Debug: print the event and all deviceEvents with normalized values
+        const eventType = event.type ? event.type.toLowerCase() : '';
+        const eventTimestamp = typeof event.timestamp === 'string' ? Date.parse(event.timestamp) : event.timestamp;
+        console.log('[DEBUG] Attempting to remove association for event:', {
+            timestamp: eventTimestamp,
+            phase: event.phase,
+            type: eventType,
+            powerDelta: event.powerDelta
         });
-        
+        console.log('[DEBUG] Current deviceEvents:');
+        this.deviceEvents.forEach((assoc, idx) => {
+            const assocType = assoc.type ? assoc.type.toLowerCase() : '';
+            const assocTimestamp = typeof assoc.timestamp === 'string' ? Date.parse(assoc.timestamp) : assoc.timestamp;
+            console.log(`  [${idx}]`, {
+                timestamp: assocTimestamp,
+                phase: assoc.phase,
+                type: assocType,
+                deviceId: assoc.deviceId,
+                eventId: assoc.eventId
+            });
+        });
+        // Restore eventInfo
+        const eventInfo = this.getEventInfoForPoint(event);
+        let associationsToRemove = [];
+        if (eventInfo.eventId) {
+            // Remove by unified event ID (preferred method)
+            console.log(`Removing all associations for unified event ${eventInfo.eventId}`);
+            associationsToRemove = this.deviceEvents.filter(assoc => assoc.eventId === eventInfo.eventId);
+            if (associationsToRemove.length > 0) {
+                this.deviceEvents = this.deviceEvents.filter(assoc => assoc.eventId !== eventInfo.eventId);
+                this.learningData = this.learningData.filter(data => data.eventId !== eventInfo.eventId);
+                this.deviceEvents = this.deviceEvents.filter(devEvent => devEvent.id !== eventInfo.eventId);
+                console.log(`Removed ${associationsToRemove.length} associations by event ID ${eventInfo.eventId}`);
+            }
+        }
+        // Fallback: remove by timestamp/device ID if no event ID linking worked
+        if (associationsToRemove.length === 0 && eventInfo.deviceId) {
+            console.log(`Fallback: Removing associations by device ID and timestamp for ${eventInfo.deviceId}`);
+            const timeWindow = 30000; // 30 seconds window
+            const eventTimestamp = typeof event.timestamp === 'string' ? Date.parse(event.timestamp) : event.timestamp;
+            associationsToRemove = this.deviceEvents.filter(assoc => {
+                const assocTimestamp = typeof assoc.timestamp === 'string' ? Date.parse(assoc.timestamp) : assoc.timestamp;
+                return Math.abs(assocTimestamp - eventTimestamp) <= timeWindow &&
+                       assoc.phase === event.phase &&
+                       assoc.deviceId === eventInfo.deviceId;
+            });
+            if (associationsToRemove.length > 0) {
+                this.deviceEvents = this.deviceEvents.filter(assoc => {
+                    const assocTimestamp = typeof assoc.timestamp === 'string' ? Date.parse(assoc.timestamp) : assoc.timestamp;
+                    return !(Math.abs(assocTimestamp - eventTimestamp) <= timeWindow &&
+                             assoc.phase === event.phase &&
+                             assoc.deviceId === eventInfo.deviceId);
+                });
+                this.learningData = this.learningData.filter(data => {
+                    const dataTimestamp = typeof data.timestamp === 'string' ? Date.parse(data.timestamp) : data.timestamp;
+                    return !(Math.abs(dataTimestamp - eventTimestamp) <= timeWindow &&
+                             data.phase === event.phase &&
+                             data.deviceId === eventInfo.deviceId);
+                });
+                this.removeDeviceEventsForEvent(event, eventInfo.deviceId);
+            }
+        }
+        // Extra fallback: remove by timestamp, phase, and type if nothing else found
+        if (associationsToRemove.length === 0) {
+            const timeWindow = 5000;
+            const eventType = event.type ? event.type.toLowerCase() : '';
+            const eventTimestamp = typeof event.timestamp === 'string' ? Date.parse(event.timestamp) : event.timestamp;
+            associationsToRemove = this.deviceEvents.filter(assoc => {
+                const assocType = assoc.type ? assoc.type.toLowerCase() : '';
+                const assocTimestamp = typeof assoc.timestamp === 'string' ? Date.parse(assoc.timestamp) : assoc.timestamp;
+                return Math.abs(assocTimestamp - eventTimestamp) <= timeWindow &&
+                       assoc.phase === event.phase &&
+                       assocType === eventType;
+            });
+            if (associationsToRemove.length > 0) {
+                this.deviceEvents = this.deviceEvents.filter(assoc => {
+                    const assocType = assoc.type ? assoc.type.toLowerCase() : '';
+                    const assocTimestamp = typeof assoc.timestamp === 'string' ? Date.parse(assoc.timestamp) : assoc.timestamp;
+                    return !(Math.abs(assocTimestamp - eventTimestamp) <= timeWindow &&
+                             assoc.phase === event.phase &&
+                             assocType === eventType);
+                });
+                this.learningData = this.learningData.filter(data => {
+                    const dataType = data.type ? data.type.toLowerCase() : '';
+                    const dataTimestamp = typeof data.timestamp === 'string' ? Date.parse(data.timestamp) : data.timestamp;
+                    return !(Math.abs(dataTimestamp - eventTimestamp) <= timeWindow &&
+                             data.phase === event.phase &&
+                             dataType === eventType);
+                });
+                console.log(`Extra fallback: removed ${associationsToRemove.length} associations by timestamp, phase, and type.`);
+            }
+        }
         if (associationsToRemove.length === 0) {
             console.log('No associations found to remove');
             return 0;
         }
-        
         console.log(`Found ${associationsToRemove.length} associations to remove:`, associationsToRemove);
-        
-        // Remove all matching associations
-        this.deviceAssociations = this.deviceAssociations.filter(assoc => {
-            return !(Math.abs(assoc.timestamp - event.timestamp) <= timeWindow &&
-                     assoc.phase === event.phase &&
-                     assoc.deviceId === deviceId);
-        });
-        
-        // Also remove from learning data
-        this.learningData = this.learningData.filter(data => {
-            return !(Math.abs(data.timestamp - event.timestamp) <= timeWindow &&
-                     data.phase === event.phase &&
-                     data.deviceId === deviceId);
-        });
-        
-        // Remove corresponding device events that create Event Role values
-        this.removeDeviceEventsForEvent(event, deviceId);
-        
-        // Save the updated data
         this.saveTrackingData();
-        
-        console.log(`Removed ${associationsToRemove.length} associations for device ${deviceId}`);
+        console.log(`Successfully removed ${associationsToRemove.length} associations`);
         return associationsToRemove.length;
+    }
+
+    /**
+     * Get event and device information for a specific point
+     */
+    getEventInfoForPoint(event) {
+        const timeWindow = 5000; // 5 seconds for exact match
+        const eventType = event.type ? event.type.toLowerCase() : '';
+        const eventTimestamp = typeof event.timestamp === 'string' ? Date.parse(event.timestamp) : event.timestamp;
+        
+        console.log('Looking for event info for event:', {
+            timestamp: new Date(eventTimestamp).toLocaleTimeString(),
+            phase: event.phase,
+            type: eventType,
+            powerDelta: event.powerDelta
+        });
+        
+        console.log('Available associations:', this.deviceEvents.length);
+        this.deviceEvents.forEach((assoc, index) => {
+            const assocType = assoc.type ? assoc.type.toLowerCase() : '';
+            const assocTimestamp = typeof assoc.timestamp === 'string' ? Date.parse(assoc.timestamp) : assoc.timestamp;
+            const timeDiff = Math.abs(assocTimestamp - eventTimestamp);
+            console.log(`Association ${index + 1}:`, {
+                timestamp: new Date(assocTimestamp).toLocaleTimeString(),
+                phase: assoc.phase,
+                type: assocType,
+                deviceId: assoc.deviceId,
+                eventId: assoc.eventId,
+                timeDiff: timeDiff,
+                withinWindow: timeDiff <= timeWindow,
+                phaseMatch: assoc.phase === event.phase,
+                typeMatch: assocType === eventType
+            });
+        });
+        
+        // First, look for exact timestamp/phase/type match (case-insensitive)
+        const exactMatch = this.deviceEvents.find(assoc => {
+            const assocType = assoc.type ? assoc.type.toLowerCase() : '';
+            const assocTimestamp = typeof assoc.timestamp === 'string' ? Date.parse(assoc.timestamp) : assoc.timestamp;
+            const timeMatch = Math.abs(assocTimestamp - eventTimestamp) <= timeWindow;
+            const phaseMatch = assoc.phase === event.phase;
+            const typeMatch = assocType === eventType || (eventType === 'start' && assocType === 'peak');
+            return timeMatch && phaseMatch && typeMatch;
+        });
+        
+        if (exactMatch) {
+            console.log('Found exact match:', {
+                eventId: exactMatch.eventId,
+                deviceId: exactMatch.deviceId,
+                association: exactMatch
+            });
+            return {
+                eventId: exactMatch.eventId,
+                deviceId: exactMatch.deviceId,
+                association: exactMatch
+            };
+        }
+        
+        // Fallback: look for any association at this timestamp/phase (ignore type mismatch)
+        const timePhaseMatch = this.deviceEvents.find(assoc => {
+            const assocTimestamp = typeof assoc.timestamp === 'string' ? Date.parse(assoc.timestamp) : assoc.timestamp;
+            const timeMatch = Math.abs(assocTimestamp - eventTimestamp) <= timeWindow;
+            const phaseMatch = assoc.phase === event.phase;
+            return timeMatch && phaseMatch;
+        });
+        
+        if (timePhaseMatch) {
+            console.log('Found time/phase match:', {
+                eventId: timePhaseMatch.eventId,
+                deviceId: timePhaseMatch.deviceId,
+                association: timePhaseMatch
+            });
+            return {
+                eventId: timePhaseMatch.eventId,
+                deviceId: timePhaseMatch.deviceId,
+                association: timePhaseMatch
+            };
+        }
+        
+        console.log('No event info found - no associations match criteria');
+        return { eventId: null, deviceId: null, association: null };
+    }
+
+    /**
+     * Remove all associations for a specific event ID, type, and node
+     */
+    removeByEventId(eventId, type, timestamp, phase, deviceId) {
+        console.log(`Removing association for event ID: ${eventId}, type: ${type}, timestamp: ${timestamp}, phase: ${phase}, deviceId: ${deviceId}`);
+        const beforeCount = this.deviceEvents.length;
+        this.deviceEvents = this.deviceEvents.filter(assoc => {
+            return !(
+                assoc.eventId === eventId &&
+                assoc.type === type &&
+                assoc.timestamp === timestamp &&
+                assoc.phase === phase &&
+                assoc.deviceId === deviceId
+            );
+        });
+        this.saveTrackingData();
+        const afterCount = this.deviceEvents.length;
+        return beforeCount - afterCount;
+    }
+
+    /**
+     * Remove association by association ID (fallback method)
+     */
+    removeByAssociationId(associationId) {
+        console.log(`Removing association with ID: ${associationId}`);
+        const beforeCount = this.deviceEvents.length;
+        this.deviceEvents = this.deviceEvents.filter(assoc => assoc.id !== associationId);
+        this.saveTrackingData();
+        const afterCount = this.deviceEvents.length;
+        return beforeCount - afterCount;
     }
     
     /**
@@ -1190,7 +1313,7 @@ class DeviceTracker {
         });
         
         console.log('Available associations (showing only those with matching timestamp):');
-        const matchingTimeAssociations = this.deviceAssociations.filter(assoc => 
+        const matchingTimeAssociations = this.deviceEvents.filter(assoc => 
             Math.abs(assoc.timestamp - event.timestamp) <= 5000
         );
         matchingTimeAssociations.forEach((assoc, index) => {
@@ -1203,7 +1326,7 @@ class DeviceTracker {
             });
         });
         
-        const association = this.deviceAssociations.find(assoc => {
+        const association = this.deviceEvents.find(assoc => {
             const timeMatch = Math.abs(assoc.timestamp - event.timestamp) <= timeWindow;
             const phaseMatch = assoc.phase === event.phase;
             const typeMatch = assoc.type === event.type || event.type === 'start';
@@ -1245,15 +1368,15 @@ class DeviceTracker {
      * @returns {number} Number of associations removed
      */
     removeAllDeviceAssociations(deviceId) {
-        const initialCount = this.deviceAssociations.length;
+        const initialCount = this.deviceEvents.length;
         
         // Remove all associations for this device
-        this.deviceAssociations = this.deviceAssociations.filter(assoc => assoc.deviceId !== deviceId);
+        this.deviceEvents = this.deviceEvents.filter(assoc => assoc.deviceId !== deviceId);
         
         // Also remove from learning data
         this.learningData = this.learningData.filter(data => data.deviceId !== deviceId);
         
-        const removedCount = initialCount - this.deviceAssociations.length;
+        const removedCount = initialCount - this.deviceEvents.length;
         
         if (removedCount > 0) {
             console.log(`Removed ${removedCount} device associations for device ${deviceId}`);
@@ -1325,7 +1448,7 @@ class DeviceTracker {
      * Get device associations
      */
     getAssociations() {
-        return this.deviceAssociations;
+        return this.deviceEvents;
     }
 
     /**
@@ -1353,7 +1476,7 @@ class DeviceTracker {
         try {
             const associations = localStorage.getItem('deviceAssociations');
             if (associations) {
-                this.deviceAssociations = JSON.parse(associations);
+                this.deviceEvents = JSON.parse(associations);
             }
 
             const learningData = localStorage.getItem('learningData');
@@ -1387,7 +1510,7 @@ class DeviceTracker {
     async saveTrackingData() {
         try {
             const trackingData = {
-                deviceAssociations: this.deviceAssociations,
+                deviceAssociations: this.deviceEvents,
                 learningData: this.learningData,
                 eventHistory: this.eventHistory,
                 deviceEvents: this.deviceEvents,
@@ -1398,7 +1521,7 @@ class DeviceTracker {
                 await this.configManager.updateTrackingData(trackingData);
             } else {
                 // Fallback to localStorage
-                localStorage.setItem('deviceAssociations', JSON.stringify(this.deviceAssociations));
+                localStorage.setItem('deviceAssociations', JSON.stringify(this.deviceEvents));
                 localStorage.setItem('learningData', JSON.stringify(this.learningData));
                 localStorage.setItem('eventHistory', JSON.stringify(this.eventHistory));
                 localStorage.setItem('deviceEvents', JSON.stringify(this.deviceEvents));
@@ -1428,15 +1551,15 @@ class DeviceTracker {
      */
     getTrackingStats() {
         const stats = {
-            totalAssociations: this.deviceAssociations.length,
-            manualAssociations: this.deviceAssociations.filter(a => a.source === 'manual').length,
-            autoAssociations: this.deviceAssociations.filter(a => a.source === 'auto').length,
+            totalAssociations: this.deviceEvents.length,
+            manualAssociations: this.deviceEvents.filter(a => a.source === 'manual').length,
+            autoAssociations: this.deviceEvents.filter(a => a.source === 'auto').length,
             deviceBreakdown: {},
             phaseBreakdown: { A: 0, B: 0, C: 0 },
             typeBreakdown: { peak: 0, valley: 0 }
         };
 
-        this.deviceAssociations.forEach(association => {
+        this.deviceEvents.forEach(association => {
             // Device breakdown
             if (!stats.deviceBreakdown[association.deviceId]) {
                 stats.deviceBreakdown[association.deviceId] = 0;
@@ -1458,7 +1581,7 @@ class DeviceTracker {
      */
     exportTrackingData() {
         const exportData = {
-            deviceAssociations: this.deviceAssociations,
+            deviceAssociations: this.deviceEvents,
             learningData: this.learningData,
             eventHistory: this.eventHistory.slice(-100), // Last 100 events only
             exportedAt: new Date().toISOString(),
@@ -1476,7 +1599,7 @@ class DeviceTracker {
             const data = JSON.parse(jsonData);
             
             if (data.deviceAssociations) {
-                this.deviceAssociations = data.deviceAssociations;
+                this.deviceEvents = data.deviceAssociations;
             }
             
             if (data.learningData) {
@@ -1504,9 +1627,8 @@ class DeviceTracker {
         try {
             // Clear in-memory data
             this.eventHistory = [];
-            this.deviceAssociations = [];
-            this.learningData = [];
             this.deviceEvents = [];
+            this.learningData = [];
             this.consumptionPatterns.clear();
             
             if (this.configManager) {
@@ -1526,6 +1648,99 @@ class DeviceTracker {
             console.error('Error clearing tracking data:', error);
             return false;
         }
+    }
+
+    // Utility: Clear all device and event associations (for debugging/reset)
+    clearAllAssociations() {
+        this.deviceEvents = [];
+        this.learningData = [];
+        this.saveTrackingData();
+        console.log('[INFO] All device and event associations have been cleared.');
+    }
+
+    // Node type classification for realtime data
+    classifyNodeType(data, currentIndex) {
+        if (data.length < 3 || currentIndex === 0 || currentIndex === data.length - 1) {
+            return 'normal'; // Edge cases are always normal
+        }
+        
+        const prevValue = data[currentIndex - 1].y;
+        const currentValue = data[currentIndex].y;
+        const nextValue = data[currentIndex + 1].y;
+        
+        // Apply the classification rules:
+        // 1) node value = previous node and next node value >= node value --> node is normal
+        if (currentValue === prevValue && nextValue >= currentValue) {
+            return 'normal';
+        }
+        
+        // 2) node value = previous node and next node value < node value --> node is peak
+        if (currentValue === prevValue && nextValue < currentValue) {
+            return 'peak';
+        }
+        
+        // 3) node value < previous node and next node value <= node value --> node is normal
+        if (currentValue < prevValue && nextValue <= currentValue) {
+            return 'normal';
+        }
+        
+        // 4) node value < previous node and next node value > node value --> node is valley
+        if (currentValue < prevValue && nextValue > currentValue) {
+            return 'valley';
+        }
+        
+        // 5) node value >= previous node and next node value >= node value --> node is normal
+        if (currentValue >= prevValue && nextValue >= currentValue) {
+            return 'normal';
+        }
+        
+        // 6) node value >= previous node and next node value < node value --> node is peak
+        if (currentValue >= prevValue && nextValue < currentValue) {
+            return 'peak';
+        }
+        
+        // Default fallback
+        return 'normal';
+    }
+    
+    // Process new data point with node type classification
+    processNewDataPoint(newDataPoint, phase) {
+        // Initially mark as normal
+        newDataPoint.nodeType = 'normal';
+        
+        // Get recent data points for this phase
+        const recentData = this.getRecentDataPoints(phase, 3); // Get last 3 points
+        
+        if (recentData.length >= 3) {
+            // Re-evaluate the previous point now that we have a next point
+            const prevIndex = recentData.length - 2;
+            const prevNodeType = this.classifyNodeType(recentData, prevIndex);
+            
+            // Update the previous point's node type if it changed
+            if (recentData[prevIndex].nodeType !== prevNodeType) {
+                recentData[prevIndex].nodeType = prevNodeType;
+                console.log(`Node type updated: ${recentData[prevIndex].timestamp} -> ${prevNodeType}`);
+            }
+        }
+        
+        // Store the new data point
+        this.storeDataPoint(newDataPoint, phase);
+        
+        return newDataPoint;
+    }
+    
+    // Get recent data points for a specific phase
+    getRecentDataPoints(phase, count = 10) {
+        // This would need to be implemented based on your data storage structure
+        // For now, returning a placeholder
+        return [];
+    }
+    
+    // Store data point with node type classification
+    storeDataPoint(dataPoint, phase) {
+        // This would store the data point with its node type classification
+        // Implementation depends on your data storage structure
+        console.log(`Storing data point for phase ${phase}: ${dataPoint.nodeType} at ${dataPoint.timestamp}`);
     }
 }
 
