@@ -325,6 +325,37 @@ class DataCollector {
             // Connect to device
             await this.connect();
             
+            // Write CSV header if file doesn't exist (ensure consistent format)
+            if (!existsSync(this.outputFile)) {
+                const headerMap = new Map([
+                    ['mac', 'device_id'],
+                    ['ts', 'timestamp'],
+                    ['reading_id', 'reading_id'],
+                    ['voltage_a', 'a_voltage'],
+                    ['voltage_b', 'b_voltage'],
+                    ['voltage_c', 'c_voltage'],
+                    ['current_a', 'a_current'],
+                    ['current_b', 'b_current'],
+                    ['current_c', 'c_current'],
+                    ['current_n', 'n_current'],
+                    ['apower_a', 'a_act_power'],
+                    ['apower_b', 'b_act_power'],
+                    ['apower_c', 'c_act_power'],
+                    ['aprtpower_a', 'a_aprt_power'],
+                    ['aprtpower_b', 'b_aprt_power'],
+                    ['aprtpower_c', 'c_aprt_power'],
+                    ['angle_a', 'a_angle'],
+                    ['angle_b', 'b_angle'],
+                    ['angle_c', 'c_angle'],
+                    ['pf_a', 'a_pf'],
+                    ['pf_b', 'b_pf'],
+                    ['pf_c', 'c_pf']
+                ]);
+                const header = Array.from(headerMap.values()).join(',');
+                writeFileSync(this.outputFile, header + '\n');
+                this.log('Created CSV file with header (22 fields)');
+            }
+            
             this.log('Data collection started successfully');
             this.updateStatus('running');
             

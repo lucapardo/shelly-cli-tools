@@ -3572,25 +3572,12 @@ function closeDialog() {
                 if (line.trim()) {
                     const values = line.split(',');
                     
-                    if (values.length >= 18) {  // Handle 18, 19, or 22 field formats
+                    if (values.length >= 19) {  // Need at least 19 fields now (was 18)
                         const recordDeviceId = values[0].trim().toLowerCase(); // MAC address
                         
                         // Filter by device ID if WEB connection type is selected
                         if (currentDeviceId && recordDeviceId !== currentDeviceId) {
                             return; // Skip this reading - not from the selected device
-                        }
-                        
-                        // Detect format based on field count
-                        let powerStartIndex;
-                        if (values.length === 22) {
-                            // New standard format: device_id,timestamp,reading_id,a_voltage,b_voltage,c_voltage,a_current,b_current,c_current,n_current,a_act_power,...
-                            powerStartIndex = 10; // After n_current field
-                        } else if (values.length === 19 && values[9] === '') {
-                            // Windows format with empty field: device_id,timestamp,reading_id,a_voltage,b_voltage,c_voltage,a_current,b_current,c_current,,a_act_power,...
-                            powerStartIndex = 10; // After empty field
-                        } else {
-                            // Old 18-field format: device_id,timestamp,reading_id,a_voltage,b_voltage,c_voltage,a_current,b_current,c_current,a_act_power,...
-                            powerStartIndex = 9; // No extra fields
                         }
                         
                         // Use average voltage when voltage reading is 0
@@ -3608,16 +3595,17 @@ function closeDialog() {
                             current_a: parseFloat(values[6]),
                             current_b: parseFloat(values[7]),
                             current_c: parseFloat(values[8]),
-                            // Power values start at different indices depending on format
-                            apower_a: parseFloat(values[powerStartIndex]) || 0,
-                            apower_b: parseFloat(values[powerStartIndex + 1]) || 0,
-                            apower_c: parseFloat(values[powerStartIndex + 2]) || 0,
-                            aprtpower_a: parseFloat(values[powerStartIndex + 3]) || 0,
-                            aprtpower_b: parseFloat(values[powerStartIndex + 4]) || 0,
-                            aprtpower_c: parseFloat(values[powerStartIndex + 5]) || 0,
-                            pf_a: parseFloat(values[powerStartIndex + 6]) || 0,
-                            pf_b: parseFloat(values[powerStartIndex + 7]) || 0,
-                            pf_c: parseFloat(values[powerStartIndex + 8]) || 0
+                            // current_n: values[9] ? parseFloat(values[9]) : null; // Not present in CSV
+                            // FIXED: Field 9 is empty, power values start from field 10
+                            apower_a: parseFloat(values[10]) || 0,  // Was values[9] - empty field
+                            apower_b: parseFloat(values[11]) || 0,  // Was values[10]
+                            apower_c: parseFloat(values[12]) || 0,  // Was values[11] - this should be 1135.8!
+                            aprtpower_a: parseFloat(values[13]) || 0,  // Shifted +1
+                            aprtpower_b: parseFloat(values[14]) || 0,  // Shifted +1
+                            aprtpower_c: parseFloat(values[15]) || 0,  // Shifted +1
+                            pf_a: parseFloat(values[16]) || 0,         // Shifted +1
+                            pf_b: parseFloat(values[17]) || 0,         // Shifted +1
+                            pf_c: parseFloat(values[18]) || 0          // Shifted +1
                         });
                     }
                 }
@@ -6377,18 +6365,11 @@ function closeDialog() {
                 }
             });
             
-            // Update charts when device ID changes (for device filtering)
-            document.getElementById('deviceId').addEventListener('input', () => {
-                console.log("🎯 ============ DEVICE ID CHANGED! ============");
-                console.log("🎯 New Device ID:", document.getElementById('deviceId').value);
-                console.log("🎯 Connection Type:", document.getElementById('connectionType').value);
+            // Update charts when device ID inputs (for device filtering)
+            document.getElementById('deviceId').addEventListener('change', () => {
                 if (lastDataUpdate) {
-                    console.log("�� Calling loadData() to reload with new device filter...");
                     loadData(); // Reload to apply device filtering
-                } else {
-                    console.log("🎯 Skipping loadData() - no previous data update");
                 }
-                console.log("🎯 ============ DEVICE ID CHANGE COMPLETE ============");
             });
             
             // Update charts when connection type changes (affects device filtering)
@@ -7271,9 +7252,6 @@ function closeDialog() {
             const defaultDeviceId = selectedOption.getAttribute('data-default-deviceid');
             if (defaultDeviceId) {
                 document.getElementById('deviceId').value = defaultDeviceId;
-            stopDataCollection();
-           /*  startDataCollection(); */
-                loadData();
             }
         }
 

@@ -1,0 +1,13 @@
+--- a/graphs.html
++++ b/graphs.html
+@@ -3555,8 +3555,11 @@ function getCurrentDeviceId() {
++            console.log("📡 getCurrentDeviceId() called - connectionType:", document.getElementById('connectionType').value);
+             const connectionType = document.getElementById('connectionType').value;
+             if (connectionType === 'WEB') {
++                console.log("📡 WEB connection - deviceId value:", document.getElementById('deviceId').value);
+                 return document.getElementById('deviceId').value.trim().toLowerCase();
++            } else {
++                console.log("�� DIRECT connection - showing all devices");
+             }
+             return null; // For DIRECT connections, show all data
+         }

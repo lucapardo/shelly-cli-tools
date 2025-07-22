@@ -9,6 +9,8 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync } fr
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { Command } from 'commander';
+import { mapToFile } from './src/utils.js';
+import { measurementFromDeviceEMStatus } from './src/model.js';
 
 // Get current directory for Windows compatibility
 const __filename = fileURLToPath(import.meta.url);
@@ -122,32 +124,18 @@ class WindowsDataCollector {
 
             const data = await response.json();
             
-            // Process the reading data
-            const timestamp = Math.floor(Date.now() / 1000);
-            const csvLine = [
-                'DEVICE_ID', // Placeholder for device ID
-                timestamp,
-                this.readingCount,
-                data.a_voltage || 0,
-                data.b_voltage || 0,
-                data.c_voltage || 0,
-                data.a_current || 0,
-                data.b_current || 0,
-                data.c_current || 0,
-                '', // Empty field
-                data.a_act_power || 0,
-                data.b_act_power || 0,
-                data.c_act_power || 0,
-                data.a_aprt_power || 0,
-                data.b_aprt_power || 0,
-                data.c_aprt_power || 0,
-                data.a_pf || 0,
-                data.b_pf || 0,
-                data.c_pf || 0
-            ].join(',');
+            // Use the same measurement processing as the standard collector
+            const measurement = measurementFromDeviceEMStatus(data);
+            
+            const resultMap = new Map([
+                ['mac', this.shellyIP.replace(/\./g, '').toLowerCase() || 'unknown'], // Convert IP to device-like ID
+                ['ts', Math.floor(Date.now() / 1000)],
+                ['reading_id', this.readingCount],
+                ...Object.entries(measurement),
+            ]);
 
-            // Write to CSV file
-            appendFileSync(this.outputFile, csvLine + '\n');
+            // Write to file using the same method as standard collector
+            mapToFile(resultMap, this.outputFile);
 
             this.readingCount++;
             this.lastSuccessfulReading = new Date().toISOString();
@@ -158,7 +146,7 @@ class WindowsDataCollector {
                 this.log(`Reading ${this.readingCount}: Power A=${data.a_act_power}W, B=${data.b_act_power}W, C=${data.c_act_power}W`);
             }
 
-            return data;
+            return measurement;
 
         } catch (error) {
             this.consecutiveErrors++;
@@ -197,8 +185,8 @@ class WindowsDataCollector {
 
         // Write CSV header if file doesn't exist
         if (!existsSync(this.outputFile)) {
-            const header = 'device_id,timestamp,reading_id,a_voltage,b_voltage,c_voltage,a_current,b_current,c_current,empty,a_act_power,b_act_power,c_act_power,a_aprt_power,b_aprt_power,c_aprt_power,a_pf,b_pf,c_pf';
-            writeFileSync(this.outputFile, header + '\n');
+            // Let mapToFile handle the data format - no manual header needed
+            this.log('Creating new CSV output file');
         }
 
         try {

@@ -84,7 +84,7 @@ function measurementFromDeviceEMStatus(statusResult) {
     const phase = _keys[2];
     const type = _keys[1];
     result[key] = statusResult[`${phase}_${translate[type]}`]
-    if(result[key] === undefined) delete result[key];
+    if(result[key] === undefined) result[key] = 0; // Use 0 instead of deleting to maintain consistent field count
     return result;
   }, {});
 }
